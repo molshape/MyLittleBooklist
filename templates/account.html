@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% set crumbs = [("Konto", None)] %}
-{% block title %}Konto · {% endblock %}
+{% set crumbs = [(_("Account"), None)] %}
+{% block title %}{{ _("Account") }} · {% endblock %}
 {% block content %}
 <article class="narrow">
-  <h2>Passwort ändern</h2>
+  <h2>{{ _("Change password") }}</h2>
   <form method="post">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Aktuelles Passwort <input type="password" name="old_password" autocomplete="current-password" required></label>
-    <label>Neues Passwort <input type="password" name="new_password" autocomplete="new-password" minlength="4" required></label>
-    <button type="submit">Speichern</button>
+    <label>{{ _("Current password") }} <input type="password" name="old_password" autocomplete="current-password" required></label>
+    <label>{{ _("New password") }} <input type="password" name="new_password" autocomplete="new-password" minlength="4" required></label>
+    <button type="submit">{{ _("Save") }}</button>
   </form>
 </article>
 {% endblock %}

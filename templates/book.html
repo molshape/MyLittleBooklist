@@ -6,7 +6,7 @@
 <article class="detail">
   <div class="detail-cover">
     {% if book.cover %}
-    <img src="{{ url_for('cover', book_id=book.id) }}" alt="Cover: {{ book.title }}">
+    <img src="{{ url_for('cover', book_id=book.id) }}" alt="{{ _('Cover: %(title)s', title=book.title) }}">
     {% else %}
     <div class="placeholder big"><strong>{{ book.title }}</strong><span>{{ book.author }}</span></div>
     {% endif %}
@@ -15,18 +15,18 @@
     <h1>{{ book.title }}</h1>
     <p class="author">{{ book.author }}{% if book.year %} · {{ book.year }}{% endif %}</p>
 
-    <form method="post" action="{{ url_for('rate', book_id=book.id) }}" class="rating" aria-label="Meine Bewertung">
+    <form method="post" action="{{ url_for('rate', book_id=book.id) }}" class="rating" aria-label="{{ _('My rating') }}">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       {% for i in range(1, 6) %}
       <button type="submit" name="rating" value="{{ '' if book.rating == i else i }}"
               class="star {{ 'on' if book.rating and i <= book.rating }}"
-              title="{{ 'Bewertung entfernen' if book.rating == i else i ~ ' von 5' }}">★</button>
+              title="{{ _('Remove rating') if book.rating == i else _('%(num)d of 5', num=i) }}">★</button>
       {% endfor %}
     </form>
 
     <div class="flags">
-      {% for name, column, label, icon in [("read", "is_read", "Gelesen", icons.read),
-                                           ("owned", "is_owned", "In meinem Besitz", icons.owned)] %}
+      {% for name, column, label, icon in [("read", "is_read", _("Read"), icons.read),
+                                           ("owned", "is_owned", _("I own it"), icons.owned)] %}
       <form method="post" action="{{ url_for('set_flag', book_id=book.id, name=name) }}">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <label>
@@ -34,7 +34,7 @@
                  onchange="this.form.submit()">
           {{ icon() }} {{ label }}
         </label>
-        <noscript><button type="submit" class="secondary outline">Speichern</button></noscript>
+        <noscript><button type="submit" class="secondary outline">{{ _("Save") }}</button></noscript>
       </form>
       {% endfor %}
     </div>
@@ -46,11 +46,11 @@
     </dl>
 
     <div class="actions">
-      <a href="{{ url_for('book_edit', book_id=book.id) }}" role="button">Bearbeiten</a>
+      <a href="{{ url_for('book_edit', book_id=book.id) }}" role="button">{{ _("Edit") }}</a>
       <form method="post" action="{{ url_for('remove', book_id=book.id) }}" class="inline"
-            onsubmit="return confirm('Buch aus deiner Sammlung entfernen?')">
+            onsubmit="return confirm({{ _('Remove book from your collection?')|tojson|forceescape }})">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <button type="submit" class="secondary outline">Aus Sammlung entfernen</button>
+        <button type="submit" class="secondary outline">{{ _("Remove from collection") }}</button>
       </form>
     </div>
   </div>

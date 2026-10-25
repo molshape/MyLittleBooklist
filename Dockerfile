@@ -9,8 +9,12 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY app.py schema.sql demo.py ./
 COPY templates templates
 COPY static static
+COPY translations translations
 
-ENV PATH="/app/.venv/bin:$PATH" DB_PATH=/data/books.db
+ENV PATH="/app/.venv/bin:$PATH"
+RUN pybabel compile -d translations
+
+ENV DB_PATH=/data/books.db
 VOLUME /data
 EXPOSE 8000
 # --preload: DB init runs once before the workers are forked

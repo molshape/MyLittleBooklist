@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% set crumbs = [("Benutzer", None)] %}
-{% block title %}Benutzer · {% endblock %}
+{% set crumbs = [(_("Users"), None)] %}
+{% block title %}{{ _("Users") }} · {% endblock %}
 {% block content %}
-<h2>Benutzer</h2>
+<h2>{{ _("Users") }}</h2>
 <div class="overflow-auto">
 <table>
-  <thead><tr><th>Name</th><th>Bücher</th><th>Rolle</th><th>Passwort zurücksetzen</th><th></th></tr></thead>
+  <thead><tr><th>{{ _("Name") }}</th><th>{{ _("Books") }}</th><th>{{ _("Role") }}</th><th>{{ _("Reset password") }}</th><th></th></tr></thead>
   <tbody>
   {% for u in users %}
   <tr>
@@ -14,22 +14,22 @@
     <td>
       <form method="post" action="{{ url_for('user_action', user_id=u.id, action='toggle_admin') }}" class="inline">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <button type="submit" class="link" {{ 'disabled' if u.id == g.user.id }}>{{ "Admin" if u.is_admin else "Nutzer" }}</button>
+        <button type="submit" class="link" {{ 'disabled' if u.id == g.user.id }}>{{ _("Admin") if u.is_admin else _("User") }}</button>
       </form>
     </td>
     <td>
       <form method="post" action="{{ url_for('user_action', user_id=u.id, action='password') }}" class="inline row">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <input type="password" name="password" placeholder="Neues Passwort" minlength="4" required aria-label="Neues Passwort für {{ u.username }}">
-        <button type="submit" class="secondary">Setzen</button>
+        <input type="password" name="password" placeholder="{{ _('New password') }}" minlength="4" required aria-label="{{ _('New password for %(name)s', name=u.username) }}">
+        <button type="submit" class="secondary">{{ _("Set") }}</button>
       </form>
     </td>
     <td>
       {% if u.id != g.user.id %}
       <form method="post" action="{{ url_for('user_action', user_id=u.id, action='delete') }}" class="inline"
-            onsubmit="return confirm('Benutzer samt Sammlung löschen?')">
+            onsubmit="return confirm({{ _('Delete user including their collection?')|tojson|forceescape }})">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <button type="submit" class="secondary outline">Löschen</button>
+        <button type="submit" class="secondary outline">{{ _("Delete") }}</button>
       </form>
       {% endif %}
     </td>
@@ -40,13 +40,13 @@
 </div>
 
 <article class="narrow">
-  <h3>Neuer Benutzer</h3>
+  <h3>{{ _("New user") }}</h3>
   <form method="post">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Benutzername <input name="username" required></label>
-    <label>Passwort <input type="password" name="password" minlength="4" autocomplete="new-password" required></label>
-    <label><input type="checkbox" name="is_admin"> Admin</label>
-    <button type="submit">Anlegen</button>
+    <label>{{ _("Username") }} <input name="username" required></label>
+    <label>{{ _("Password") }} <input type="password" name="password" minlength="4" autocomplete="new-password" required></label>
+    <label><input type="checkbox" name="is_admin"> {{ _("Admin") }}</label>
+    <button type="submit">{{ _("Create") }}</button>
   </form>
 </article>
 {% endblock %}
