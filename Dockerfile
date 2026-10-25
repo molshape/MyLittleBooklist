@@ -6,8 +6,7 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# demo.db* : optional, Build klappt auch ohne (dann Demo-Seed über OpenLibrary)
-COPY app.py schema.sql demo.db* ./
+COPY app.py schema.sql demo.py ./
 COPY templates templates
 COPY static static
 

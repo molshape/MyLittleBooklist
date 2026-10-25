@@ -1,12 +1,13 @@
 import os
 import tempfile
 
-os.environ.update(DB_PATH=os.path.join(tempfile.mkdtemp(), "test.db"), DEMO="0",
+os.environ.update(DB_PATH=os.path.join(tempfile.mkdtemp(), "test.db"),
                   ADMIN_USER="admin", ADMIN_PASSWORD="secret", SECRET_KEY="test")
 
 import pytest  # noqa: E402
 
 import app as bookapp  # noqa: E402
+import demo  # noqa: E402
 
 
 @pytest.fixture
@@ -77,12 +78,25 @@ def test_flow(client, monkeypatch):
 
 def test_demo_ratios():
     # Demo: je User 80 % in Besitz, 60 % gelesen; Bewertung nur für gelesene Bücher
-    for user in ("demo", "anna"):
-        entries = [users[user] for *_, users in bookapp.DEMO_BOOKS if user in users]
+    for user in demo.DEMO_USERS:
+        entries = [users[user] for *_, users in demo.DEMO_BOOKS if user in users]
         assert len(entries) == 10
         assert sum(owned for _, _, owned in entries) == 8
         assert sum(read for _, read, _ in entries) == 6
         assert all(read for rating, read, _ in entries if rating)
+
+
+def test_demo_seed(monkeypatch):
+    monkeypatch.setattr(bookapp, "DB_PATH", os.path.join(tempfile.mkdtemp(), "demo.db"))
+    monkeypatch.setattr(bookapp, "lookup_isbn", lambda isbn: None)  # offline, ohne Cover
+    monkeypatch.setattr(demo.time, "sleep", lambda s: None)
+    with bookapp.app.app_context():
+        bookapp.init_db()
+        assert demo.seed() == ["demo", "anna"]
+        assert demo.seed() == []  # zweiter Lauf legt nichts doppelt an
+        counts = bookapp.db().execute(
+            "SELECT u.username, COUNT(*) FROM user_books ub JOIN users u ON u.id = ub.user_id GROUP BY u.username").fetchall()
+    assert dict(map(tuple, counts)) == {"demo": 10, "anna": 10}
 
 
 def test_normalize_isbn():
