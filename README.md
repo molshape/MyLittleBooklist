@@ -64,6 +64,7 @@ uv run pybabel compile -d translations                    # builds the .mo files
 ADMIN_PASSWORD=admin uv run flask --app app run --debug   # creates books.db
 uv run pytest
 uv run ruff check . && uv run ruff format --check .       # lint and formatting
+uv run mypy .                                             # type check
 uv run bandit -r app.py demo.py                           # security scan
 uv run pip-audit                                          # known vulnerabilities in dependencies
 ```
