@@ -1,4 +1,4 @@
-"""MyTinyBookLog – kleine Bücherverwaltung für zu Hause."""
+"""My Little Booklist – kleine Bücherverwaltung für zu Hause."""
 
 import json
 import os
@@ -16,7 +16,7 @@ from flask import (Flask, abort, flash, g, redirect, render_template, request,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 DB_PATH = os.environ.get("DB_PATH", "books.db")
-USER_AGENT = {"User-Agent": "MyTinyBookLog/0.1 (private home library)"}
+USER_AGENT = {"User-Agent": "MyLittleBooklist/0.1 (private home library)"}
 COVER_PREFIX = "https://covers.openlibrary.org/"
 
 app = Flask(__name__)

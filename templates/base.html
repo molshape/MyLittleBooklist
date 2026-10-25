@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %}MyTinyBookLog</title>
+  <title>{% block title %}{% endblock %}My Little Booklist</title>
   <script>
     // Theme vor dem Rendern setzen, damit nichts aufblitzt.
     try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
@@ -15,7 +15,7 @@
 <body>
   <header class="container">
     <nav>
-      <ul><li><a href="{{ url_for('gallery') }}" class="brand"><img src="{{ url_for('static', filename='logo.svg') }}" alt=""> MyTinyBookLog</a></li></ul>
+      <ul><li><a href="{{ url_for('gallery') }}" class="brand"><img src="{{ url_for('static', filename='logo.svg') }}" alt=""> My Little Booklist</a></li></ul>
       {% if g.user %}
       <ul class="search">
         <li>
