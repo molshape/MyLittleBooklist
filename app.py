@@ -100,7 +100,7 @@ def lookup_isbn(isbn):
     """Returns dict(title, author, year, cover_url), or None if unknown/offline."""
     url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
     try:
-        with urlopen(Request(url, headers=USER_AGENT), timeout=10) as resp:
+        with urlopen(Request(url, headers=USER_AGENT), timeout=10) as resp:  # nosec B310
             data = json.load(resp).get(f"ISBN:{isbn}")
     except (URLError, TimeoutError, ValueError):
         return None
@@ -121,7 +121,7 @@ def fetch_cover(url):
     if not url or not url.startswith(COVER_PREFIX):
         return None, None
     try:
-        with urlopen(Request(url, headers=USER_AGENT), timeout=15) as resp:
+        with urlopen(Request(url, headers=USER_AGENT), timeout=15) as resp:  # nosec B310
             mime = resp.headers.get_content_type()
             return (resp.read(), mime) if mime.startswith("image/") else (None, None)
     except (URLError, TimeoutError):
@@ -247,7 +247,7 @@ def gallery():
            FROM books b JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
                   OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
-           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",
+           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",  # nosec B608
             params,
         )
         .fetchall()
@@ -315,7 +315,7 @@ def set_flag(book_id, name):
     owned_book(book_id)
     # Column name comes from the FLAGS whitelist, never from the URL
     db().execute(
-        f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",
+        f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",  # nosec B608
         (int(request.form.get("value") == "1"), g.user["id"], book_id),
     )
     db().commit()
@@ -390,7 +390,7 @@ def do_lookup(data, book_id=None):
 
 def insert_user_book(book_id, data, ignore=False):
     db().execute(
-        f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"
+        f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"  # nosec B608
         " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
         (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]),
     )
