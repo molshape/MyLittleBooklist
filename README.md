@@ -60,9 +60,12 @@ Requires Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync
-uv run pybabel compile -d translations                     # builds the .mo files
+uv run pybabel compile -d translations                    # builds the .mo files
 ADMIN_PASSWORD=admin uv run flask --app app run --debug   # creates books.db
 uv run pytest
+uv run ruff check . && uv run ruff format --check .       # lint and formatting
+uv run bandit -r app.py demo.py                           # security scan
+uv run pip-audit                                          # known vulnerabilities in dependencies
 ```
 
 ### Project layout

@@ -30,4 +30,5 @@ Corrections to existing translations are just as welcome.
 - Match the style of the surrounding code.
 - Mark new UI texts with `_("…")` and update the catalogs (`pybabel extract` and `pybabel update`).
 - Run the tests with `uv run pytest` and add a test for new logic.
+- Run `uv run ruff check .`, `uv run ruff format .`, `uv run bandit -r app.py demo.py` and `uv run pip-audit` – all must pass.
 - Describe in the pull request what changed and why.

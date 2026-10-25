@@ -11,8 +11,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 import isbnlib
-from flask import (Flask, abort, flash, g, redirect, render_template, request,
-                   session, url_for)
+from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
 from flask_babel import Babel, get_locale
 from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,12 +32,17 @@ if not os.environ.get("SECRET_KEY"):
     app.logger.warning("SECRET_KEY not set – sessions only last until the next restart.")
 
 # UI language follows the browser; every folder in translations/ is picked up automatically
-babel = Babel(app, locale_selector=lambda: request.accept_languages.best_match(
-    [str(locale) for locale in babel.list_translations()]))
+babel = Babel(
+    app,
+    locale_selector=lambda: request.accept_languages.best_match(
+        [str(locale) for locale in babel.list_translations()]
+    ),
+)
 app.jinja_env.globals["get_locale"] = get_locale
 
 
 # --- Database ----------------------------------------------------------------
+
 
 def db():
     if "db" not in g:
@@ -68,12 +72,15 @@ def init_db():
     if not password:
         password = secrets.token_urlsafe(12)
         app.logger.warning("ADMIN_PASSWORD not set – generated for '%s': %s", name, password)
-    db().execute("INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 1)",
-                 (name, generate_password_hash(password)))
+    db().execute(
+        "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 1)",
+        (name, generate_password_hash(password)),
+    )
     db().commit()
 
 
 # --- OpenLibrary -------------------------------------------------------------
+
 
 def normalize_isbn(raw):
     isbn = re.sub(r"[^0-9Xx]", "", raw or "").upper()
@@ -93,7 +100,7 @@ def lookup_isbn(isbn):
     """Returns dict(title, author, year, cover_url), or None if unknown/offline."""
     url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
     try:
-        with urlopen(Request(url, headers=USER_AGENT), timeout=10) as resp:
+        with urlopen(Request(url, headers=USER_AGENT), timeout=10) as resp:  # nosec B310
             data = json.load(resp).get(f"ISBN:{isbn}")
     except (URLError, TimeoutError, ValueError):
         return None
@@ -105,7 +112,7 @@ def lookup_isbn(isbn):
         "author": ", ".join(a["name"] for a in data.get("authors", [])),
         "year": int(year.group()) if year else None,
         "cover_url": data.get("cover", {}).get("large")
-                     or f"{COVER_PREFIX}b/isbn/{isbn}-L.jpg?default=false",
+        or f"{COVER_PREFIX}b/isbn/{isbn}-L.jpg?default=false",
     }
 
 
@@ -114,7 +121,7 @@ def fetch_cover(url):
     if not url or not url.startswith(COVER_PREFIX):
         return None, None
     try:
-        with urlopen(Request(url, headers=USER_AGENT), timeout=15) as resp:
+        with urlopen(Request(url, headers=USER_AGENT), timeout=15) as resp:  # nosec B310
             mime = resp.headers.get_content_type()
             return (resp.read(), mime) if mime.startswith("image/") else (None, None)
     except (URLError, TimeoutError):
@@ -122,6 +129,7 @@ def fetch_cover(url):
 
 
 # --- Auth & CSRF -------------------------------------------------------------
+
 
 @app.before_request
 def load_user_and_check_csrf():
@@ -149,6 +157,7 @@ def login_required(view):
         if g.user is None:
             return redirect(url_for("login", next=request.path))
         return view(*args, **kwargs)
+
     return wrapped
 
 
@@ -159,14 +168,21 @@ def admin_required(view):
         if not g.user["is_admin"]:
             abort(403)
         return view(*args, **kwargs)
+
     return wrapped
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = db().execute("SELECT * FROM users WHERE username = ?",
-                            (request.form.get("username", "").strip(),)).fetchone()
+        user = (
+            db()
+            .execute(
+                "SELECT * FROM users WHERE username = ?",
+                (request.form.get("username", "").strip(),),
+            )
+            .fetchone()
+        )
         if user and check_password_hash(user["password_hash"], request.form.get("password", "")):
             # Fresh session on every login (prevents session fixation), valid for 30 days.
             session.clear()
@@ -174,7 +190,9 @@ def login():
             session["uid"] = user["id"]
             session["csrf"] = secrets.token_urlsafe(32)
             nxt = request.args.get("next", "")
-            return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("gallery"))
+            return redirect(
+                nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("gallery")
+            )
         flash(_("Wrong username or password."), "error")
     return render_template("login.html")
 
@@ -195,8 +213,10 @@ def account():
         elif len(new) < 4:
             flash(_("New password must be at least 4 characters long."), "error")
         else:
-            db().execute("UPDATE users SET password_hash = ? WHERE id = ?",
-                         (generate_password_hash(new), g.user["id"]))
+            db().execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (generate_password_hash(new), g.user["id"]),
+            )
             db().commit()
             flash(_("Password changed."), "ok")
             return redirect(url_for("gallery"))
@@ -219,14 +239,19 @@ def gallery():
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
     params += [int(v) for v in filters.values()]
-    books = db().execute(
-        f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
+    books = (
+        db()
+        .execute(
+            f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
                   ub.rating, ub.is_read, ub.is_owned
            FROM books b JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
                   OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
-           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",
-        params).fetchall()
+           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",  # nosec B608
+            params,
+        )
+        .fetchall()
+    )
     return render_template("gallery.html", books=books, q=q, filters=filters)
 
 
@@ -238,10 +263,15 @@ def gallery_url(**changes):
 
 
 def owned_book(book_id):
-    book = db().execute(
-        """SELECT b.*, ub.rating, ub.is_read, ub.is_owned FROM books b
+    book = (
+        db()
+        .execute(
+            """SELECT b.*, ub.rating, ub.is_read, ub.is_owned FROM books b
            JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ? WHERE b.id = ?""",
-        (g.user["id"], book_id)).fetchone()
+            (g.user["id"], book_id),
+        )
+        .fetchone()
+    )
     if book is None:
         abort(404)
     return book
@@ -259,16 +289,20 @@ def cover(book_id):
     book = owned_book(book_id)
     if not book["cover"]:
         abort(404)
-    return book["cover"], {"Content-Type": book["cover_mime"],
-                           "Cache-Control": "private, max-age=3600"}
+    return book["cover"], {
+        "Content-Type": book["cover_mime"],
+        "Cache-Control": "private, max-age=3600",
+    }
 
 
 @app.post("/book/<int:book_id>/rate")
 @login_required
 def rate(book_id):
     owned_book(book_id)
-    db().execute("UPDATE user_books SET rating = ? WHERE user_id = ? AND book_id = ?",
-                 (parse_rating(request.form.get("rating")), g.user["id"], book_id))
+    db().execute(
+        "UPDATE user_books SET rating = ? WHERE user_id = ? AND book_id = ?",
+        (parse_rating(request.form.get("rating")), g.user["id"], book_id),
+    )
     db().commit()
     return redirect(url_for("book_detail", book_id=book_id))
 
@@ -280,8 +314,10 @@ def set_flag(book_id, name):
         abort(404)
     owned_book(book_id)
     # Column name comes from the FLAGS whitelist, never from the URL
-    db().execute(f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",
-                 (int(request.form.get("value") == "1"), g.user["id"], book_id))
+    db().execute(
+        f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",  # nosec B608
+        (int(request.form.get("value") == "1"), g.user["id"], book_id),
+    )
     db().commit()
     return redirect(url_for("book_detail", book_id=book_id))
 
@@ -290,7 +326,9 @@ def set_flag(book_id, name):
 @login_required
 def remove(book_id):
     owned_book(book_id)
-    db().execute("DELETE FROM user_books WHERE user_id = ? AND book_id = ?", (g.user["id"], book_id))
+    db().execute(
+        "DELETE FROM user_books WHERE user_id = ? AND book_id = ?", (g.user["id"], book_id)
+    )
     remove_orphans()
     db().commit()
     flash(_("Book removed from your collection."), "ok")
@@ -351,9 +389,11 @@ def do_lookup(data, book_id=None):
 
 
 def insert_user_book(book_id, data, ignore=False):
-    db().execute(f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"
-                 " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
-                 (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]))
+    db().execute(
+        f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"  # nosec B608
+        " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
+        (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]),
+    )
 
 
 def add_to_collection(book_id, data):
@@ -381,12 +421,23 @@ def book_new():
             flash(e, "error")
         return render_template("book_form.html", book=data, new=True)
     isbn = normalize_isbn(data["isbn"])
-    if isbn and (existing := db().execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()):
+    if isbn and (
+        existing := db().execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()
+    ):
         return add_to_collection(existing["id"], data)
     cover_bytes, mime = form_cover(data)
     cur = db().execute(
         "INSERT INTO books (title, author, year, isbn, description, cover, cover_mime) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (data["title"], data["author"], data["year"] or None, isbn, data["description"], cover_bytes, mime))
+        (
+            data["title"],
+            data["author"],
+            data["year"] or None,
+            isbn,
+            data["description"],
+            cover_bytes,
+            mime,
+        ),
+    )
     insert_user_book(cur.lastrowid, data)
     db().commit()
     flash(_("Book saved."), "ok")
@@ -411,22 +462,35 @@ def book_edit(book_id):
         return render_template("book_form.html", book=data, new=False)
     cover_bytes, mime = form_cover(data)
     try:
-        db().execute("UPDATE books SET title=?, author=?, year=?, isbn=?, description=? WHERE id=?",
-                     (data["title"], data["author"], data["year"] or None,
-                      normalize_isbn(data["isbn"]), data["description"], book_id))
+        db().execute(
+            "UPDATE books SET title=?, author=?, year=?, isbn=?, description=? WHERE id=?",
+            (
+                data["title"],
+                data["author"],
+                data["year"] or None,
+                normalize_isbn(data["isbn"]),
+                data["description"],
+                book_id,
+            ),
+        )
     except sqlite3.IntegrityError:
         flash(_("Another book with this ISBN already exists."), "error")
         return render_template("book_form.html", book=data, new=False)
     if cover_bytes:
-        db().execute("UPDATE books SET cover=?, cover_mime=? WHERE id=?", (cover_bytes, mime, book_id))
-    db().execute("UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
-                 (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id))
+        db().execute(
+            "UPDATE books SET cover=?, cover_mime=? WHERE id=?", (cover_bytes, mime, book_id)
+        )
+    db().execute(
+        "UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
+        (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id),
+    )
     db().commit()
     flash(_("Changes saved."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
 
 
 # --- User management (admin) ------------------------------------------------
+
 
 @app.route("/users", methods=["GET", "POST"])
 @admin_required
@@ -437,17 +501,24 @@ def users():
             flash(_("Enter a username and a password (at least 4 characters)."), "error")
         else:
             try:
-                db().execute("INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
-                             (name, generate_password_hash(password), int("is_admin" in request.form)))
+                db().execute(
+                    "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
+                    (name, generate_password_hash(password), int("is_admin" in request.form)),
+                )
                 db().commit()
                 flash(_("User “%(name)s” created.", name=name), "ok")
             except sqlite3.IntegrityError:
                 flash(_("Username already exists."), "error")
         return redirect(url_for("users"))
-    rows = db().execute(
-        """SELECT u.id, u.username, u.is_admin, COUNT(ub.book_id) AS books
+    rows = (
+        db()
+        .execute(
+            """SELECT u.id, u.username, u.is_admin, COUNT(ub.book_id) AS books
            FROM users u LEFT JOIN user_books ub ON ub.user_id = u.id
-           GROUP BY u.id ORDER BY u.username COLLATE NOCASE""").fetchall()
+           GROUP BY u.id ORDER BY u.username COLLATE NOCASE"""
+        )
+        .fetchall()
+    )
     return render_template("users.html", users=rows)
 
 
@@ -467,8 +538,10 @@ def user_action(user_id, action):
         if len(password) < 4:
             flash(_("Password must be at least 4 characters long."), "error")
         else:
-            db().execute("UPDATE users SET password_hash = ? WHERE id = ?",
-                         (generate_password_hash(password), user_id))
+            db().execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (generate_password_hash(password), user_id),
+            )
             flash(_("Password reset."), "ok")
     else:
         abort(404)
