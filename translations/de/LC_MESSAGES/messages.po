@@ -1,0 +1,396 @@
+# German translations for My Little Booklist.
+# Copyright (C) 2026 Axel Müller
+# This file is distributed under the same license as the My Little Booklist
+# project.
+# Axel Müller, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: My Little Booklist 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-25 14:43+0100\n"
+"PO-Revision-Date: 2026-10-25 14:25+0100\n"
+"Last-Translator: Axel Müller\n"
+"Language: de\n"
+"Language-Team: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: app.py:136
+msgid "Invalid form token – please reload the page."
+msgstr "Ungültiges Formular-Token – bitte Seite neu laden."
+
+#: app.py:178
+msgid "Wrong username or password."
+msgstr "Benutzername oder Passwort falsch."
+
+#: app.py:194
+msgid "Current password is wrong."
+msgstr "Aktuelles Passwort ist falsch."
+
+#: app.py:196
+msgid "New password must be at least 4 characters long."
+msgstr "Neues Passwort muss mindestens 4 Zeichen haben."
+
+#: app.py:201
+msgid "Password changed."
+msgstr "Passwort geändert."
+
+#: app.py:296
+msgid "Book removed from your collection."
+msgstr "Buch aus deiner Sammlung entfernt."
+
+#: app.py:320
+msgid "ISBN must have 10 or 13 digits."
+msgstr "ISBN muss 10 oder 13 Stellen haben."
+
+#: app.py:322
+msgid "Year of publication must be a number."
+msgstr "Erscheinungsjahr muss eine Zahl sein."
+
+#: app.py:339
+msgid "Please enter a valid ISBN (10 or 13 digits)."
+msgstr "Bitte eine gültige ISBN (10 oder 13 Stellen) eingeben."
+
+#: app.py:347
+msgid "Nothing found on OpenLibrary – please fill in manually."
+msgstr "Bei OpenLibrary nichts gefunden – bitte manuell ausfüllen."
+
+#: app.py:349
+msgid "Data taken from OpenLibrary – please check and save."
+msgstr "Daten von OpenLibrary übernommen – bitte prüfen und speichern."
+
+#: app.py:362
+msgid "This book is already in the catalog and was added to your collection."
+msgstr "Das Buch ist schon im Katalog und wurde deiner Sammlung hinzugefügt."
+
+#: app.py:378 app.py:407
+msgid "Title is required."
+msgstr "Titel ist ein Pflichtfeld."
+
+#: app.py:392
+msgid "Book saved."
+msgstr "Buch gespeichert."
+
+#: app.py:418
+msgid "Another book with this ISBN already exists."
+msgstr "Ein anderes Buch mit dieser ISBN existiert bereits."
+
+#: app.py:425
+msgid "Changes saved."
+msgstr "Änderungen gespeichert."
+
+#: app.py:437
+msgid "Enter a username and a password (at least 4 characters)."
+msgstr "Benutzername und Passwort (mind. 4 Zeichen) angeben."
+
+#: app.py:443
+#, python-format
+msgid "User “%(name)s” created."
+msgstr "Benutzer „%(name)s“ angelegt."
+
+#: app.py:445
+msgid "Username already exists."
+msgstr "Benutzername existiert bereits."
+
+#: app.py:458
+msgid "You cannot delete yourself or remove your own admin rights."
+msgstr "Du kannst dich nicht selbst löschen oder dir die Admin-Rechte entziehen."
+
+#: app.py:462
+msgid "User deleted."
+msgstr "Benutzer gelöscht."
+
+#: app.py:468
+msgid "Password must be at least 4 characters long."
+msgstr "Passwort muss mindestens 4 Zeichen haben."
+
+#: app.py:472
+msgid "Password reset."
+msgstr "Passwort zurückgesetzt."
+
+#: templates/account.html:2 templates/account.html:3 templates/base.html:41
+msgid "Account"
+msgstr "Konto"
+
+#: templates/account.html:6
+msgid "Change password"
+msgstr "Passwort ändern"
+
+#: templates/account.html:9
+msgid "Current password"
+msgstr "Aktuelles Passwort"
+
+#: templates/account.html:10 templates/users.html:23
+msgid "New password"
+msgstr "Neues Passwort"
+
+#: templates/account.html:11 templates/book.html:37 templates/book_form.html:58
+msgid "Save"
+msgstr "Speichern"
+
+#: templates/base.html:24
+msgid "Search …"
+msgstr "Suchen …"
+
+#: templates/base.html:24
+msgid "Search books"
+msgstr "Bücher durchsuchen"
+
+#: templates/base.html:29
+msgid "Clear search"
+msgstr "Suche zurücksetzen"
+
+#: templates/base.html:39
+msgid "Book"
+msgstr "Buch"
+
+#: templates/base.html:40 templates/users.html:2 templates/users.html:3
+#: templates/users.html:5
+msgid "Users"
+msgstr "Benutzer"
+
+#: templates/base.html:45
+msgid "Log out"
+msgstr "Abmelden"
+
+#: templates/base.html:49
+msgid "Toggle light/dark mode"
+msgstr "Hell/Dunkel umschalten"
+
+#: templates/base.html:61 templates/gallery.html:12
+msgid "My books"
+msgstr "Meine Bücher"
+
+#: templates/book.html:9 templates/gallery.html:31
+#, python-format
+msgid "Cover: %(title)s"
+msgstr "Cover: %(title)s"
+
+#: templates/book.html:18 templates/book_form.html:39
+msgid "My rating"
+msgstr "Meine Bewertung"
+
+#: templates/book.html:23
+msgid "Remove rating"
+msgstr "Bewertung entfernen"
+
+#: templates/book.html:23
+#, python-format
+msgid "%(num)d of 5"
+msgstr "%(num)d von 5"
+
+#: templates/book.html:28 templates/book_form.html:48 templates/gallery.html:18
+#: templates/gallery.html:41
+msgid "Read"
+msgstr "Gelesen"
+
+#: templates/book.html:29 templates/book_form.html:49 templates/gallery.html:42
+msgid "I own it"
+msgstr "In meinem Besitz"
+
+#: templates/book.html:49 templates/book_form.html:4 templates/book_form.html:5
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: templates/book.html:51
+msgid "Remove book from your collection?"
+msgstr "Buch aus deiner Sammlung entfernen?"
+
+#: templates/book.html:53
+msgid "Remove from collection"
+msgstr "Aus Sammlung entfernen"
+
+#: templates/book_form.html:3 templates/book_form.html:5
+#: templates/book_form.html:8
+msgid "New book"
+msgstr "Neues Buch"
+
+#: templates/book_form.html:8
+msgid "Edit book"
+msgstr "Buch bearbeiten"
+
+#: templates/book_form.html:16
+msgid "e.g. 978-3-16-148410-0"
+msgstr "z. B. 978-3-16-148410-0"
+
+#: templates/book_form.html:18
+msgid "Look up"
+msgstr "Nachschlagen"
+
+#: templates/book_form.html:20
+msgid ""
+"ISBN-10 or ISBN-13 – hyphens and spaces are allowed. “Look up” fetches "
+"data and cover from OpenLibrary."
+msgstr ""
+"ISBN-10 oder ISBN-13 – Bindestriche und Leerzeichen sind erlaubt. "
+"„Nachschlagen“ holt Daten und Cover von OpenLibrary."
+
+#: templates/book_form.html:25
+msgid "Cover preview"
+msgstr "Cover-Vorschau"
+
+#: templates/book_form.html:27
+msgid "Current cover"
+msgstr "Aktuelles Cover"
+
+#: templates/book_form.html:29
+msgid "No cover"
+msgstr "Kein Cover"
+
+#: templates/book_form.html:31
+msgid "Upload cover"
+msgstr "Cover hochladen"
+
+#: templates/book_form.html:34
+msgid "Title"
+msgstr "Titel"
+
+#: templates/book_form.html:36
+msgid "Author"
+msgstr "Autor"
+
+#: templates/book_form.html:37
+msgid "Year of publication"
+msgstr "Erscheinungsjahr"
+
+#: templates/book_form.html:41
+msgid "– none –"
+msgstr "– keine –"
+
+#: templates/book_form.html:51
+msgid "Description"
+msgstr "Beschreibung"
+
+#: templates/book_form.html:51
+msgid "(visible to all users who have this book)"
+msgstr "(für alle Nutzer mit diesem Buch sichtbar)"
+
+#: templates/book_form.html:59
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: templates/gallery.html:12
+#, python-format
+msgid "Search: “%(q)s”"
+msgstr "Suche: „%(q)s“"
+
+#: templates/gallery.html:13
+#, python-format
+msgid "%(num)d book"
+msgid_plural "%(num)d books"
+msgstr[0] "%(num)d Buch"
+msgstr[1] "%(num)d Bücher"
+
+#: templates/gallery.html:17
+msgid "Filter read"
+msgstr "Filter gelesen"
+
+#: templates/gallery.html:18 templates/gallery.html:21
+msgid "All"
+msgstr "Alle"
+
+#: templates/gallery.html:18
+msgid "Unread"
+msgstr "Ungelesen"
+
+#: templates/gallery.html:20
+msgid "Filter owned"
+msgstr "Filter Besitz"
+
+#: templates/gallery.html:21
+msgid "Owned"
+msgstr "In Besitz"
+
+#: templates/gallery.html:21
+msgid "Not owned"
+msgstr "Nicht in Besitz"
+
+#: templates/gallery.html:23
+msgid "Reset filters"
+msgstr "Filter zurücksetzen"
+
+#: templates/gallery.html:50
+msgid "Nothing found."
+msgstr "Nichts gefunden."
+
+#: templates/gallery.html:50
+msgid "Show all books"
+msgstr "Alle Bücher anzeigen"
+
+#: templates/gallery.html:52
+msgid "No books yet."
+msgstr "Noch keine Bücher."
+
+#: templates/gallery.html:52
+msgid "Add your first book"
+msgstr "Füge dein erstes Buch hinzu"
+
+#: templates/gallery.html:52
+msgid "fastest by ISBN."
+msgstr "am schnellsten per ISBN."
+
+#: templates/login.html:2 templates/login.html:5 templates/login.html:10
+msgid "Log in"
+msgstr "Anmelden"
+
+#: templates/login.html:8 templates/users.html:46
+msgid "Username"
+msgstr "Benutzername"
+
+#: templates/login.html:9 templates/users.html:47
+msgid "Password"
+msgstr "Passwort"
+
+#: templates/users.html:8
+msgid "Name"
+msgstr "Name"
+
+#: templates/users.html:8
+msgid "Books"
+msgstr "Bücher"
+
+#: templates/users.html:8
+msgid "Role"
+msgstr "Rolle"
+
+#: templates/users.html:8
+msgid "Reset password"
+msgstr "Passwort zurücksetzen"
+
+#: templates/users.html:17 templates/users.html:48
+msgid "Admin"
+msgstr "Admin"
+
+#: templates/users.html:17
+msgid "User"
+msgstr "Nutzer"
+
+#: templates/users.html:23
+#, python-format
+msgid "New password for %(name)s"
+msgstr "Neues Passwort für %(name)s"
+
+#: templates/users.html:24
+msgid "Set"
+msgstr "Setzen"
+
+#: templates/users.html:30
+msgid "Delete user including their collection?"
+msgstr "Benutzer samt Sammlung löschen?"
+
+#: templates/users.html:32
+msgid "Delete"
+msgstr "Löschen"
+
+#: templates/users.html:43
+msgid "New user"
+msgstr "Neuer Benutzer"
+
+#: templates/users.html:49
+msgid "Create"
+msgstr "Anlegen"
+

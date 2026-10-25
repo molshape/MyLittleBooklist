@@ -13,6 +13,8 @@ from urllib.request import Request, urlopen
 import isbnlib
 from flask import (Flask, abort, flash, g, redirect, render_template, request,
                    session, url_for)
+from flask_babel import Babel, get_locale
+from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
 
 DB_PATH = os.environ.get("DB_PATH", "books.db")
@@ -29,6 +31,11 @@ app.config.update(
 )
 if not os.environ.get("SECRET_KEY"):
     app.logger.warning("SECRET_KEY not set – sessions only last until the next restart.")
+
+# UI language follows the browser; every folder in translations/ is picked up automatically
+babel = Babel(app, locale_selector=lambda: request.accept_languages.best_match(
+    [str(locale) for locale in babel.list_translations()]))
+app.jinja_env.globals["get_locale"] = get_locale
 
 
 # --- Database ----------------------------------------------------------------
@@ -126,7 +133,7 @@ def load_user_and_check_csrf():
     if request.method == "POST":
         token = session.get("csrf")
         if not token or not secrets.compare_digest(token, request.form.get("csrf", "")):
-            abort(400, "Ungültiges Formular-Token – bitte Seite neu laden.")
+            abort(400, _("Invalid form token – please reload the page."))
 
 
 @app.context_processor
@@ -168,7 +175,7 @@ def login():
             session["csrf"] = secrets.token_urlsafe(32)
             nxt = request.args.get("next", "")
             return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("gallery"))
-        flash("Benutzername oder Passwort falsch.", "error")
+        flash(_("Wrong username or password."), "error")
     return render_template("login.html")
 
 
@@ -184,14 +191,14 @@ def account():
     if request.method == "POST":
         new = request.form.get("new_password", "")
         if not check_password_hash(g.user["password_hash"], request.form.get("old_password", "")):
-            flash("Aktuelles Passwort ist falsch.", "error")
+            flash(_("Current password is wrong."), "error")
         elif len(new) < 4:
-            flash("Neues Passwort muss mindestens 4 Zeichen haben.", "error")
+            flash(_("New password must be at least 4 characters long."), "error")
         else:
             db().execute("UPDATE users SET password_hash = ? WHERE id = ?",
                          (generate_password_hash(new), g.user["id"]))
             db().commit()
-            flash("Passwort geändert.", "ok")
+            flash(_("Password changed."), "ok")
             return redirect(url_for("gallery"))
     return render_template("account.html")
 
@@ -286,7 +293,7 @@ def remove(book_id):
     db().execute("DELETE FROM user_books WHERE user_id = ? AND book_id = ?", (g.user["id"], book_id))
     remove_orphans()
     db().commit()
-    flash("Buch aus deiner Sammlung entfernt.", "ok")
+    flash(_("Book removed from your collection."), "ok")
     return redirect(url_for("gallery"))
 
 
@@ -310,9 +317,9 @@ def read_form():
     }
     errors = []
     if data["isbn"] and not normalize_isbn(data["isbn"]):
-        errors.append("ISBN muss 10 oder 13 Stellen haben.")
+        errors.append(_("ISBN must have 10 or 13 digits."))
     if data["year"] and not re.fullmatch(r"-?\d{1,4}", data["year"]):
-        errors.append("Erscheinungsjahr muss eine Zahl sein.")
+        errors.append(_("Year of publication must be a number."))
     return data, errors
 
 
@@ -329,7 +336,7 @@ def form_cover(data):
 def do_lookup(data, book_id=None):
     isbn = normalize_isbn(data["isbn"])
     if not isbn:
-        flash("Bitte eine gültige ISBN (10 oder 13 Stellen) eingeben.", "error")
+        flash(_("Please enter a valid ISBN (10 or 13 digits)."), "error")
         return data
     if book_id is None:
         existing = db().execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()
@@ -337,9 +344,9 @@ def do_lookup(data, book_id=None):
             return existing["id"]
     found = lookup_isbn(isbn)
     if not found:
-        flash("Bei OpenLibrary nichts gefunden – bitte manuell ausfüllen.", "error")
+        flash(_("Nothing found on OpenLibrary – please fill in manually."), "error")
         return data
-    flash("Daten von OpenLibrary übernommen – bitte prüfen und speichern.", "ok")
+    flash(_("Data taken from OpenLibrary – please check and save."), "ok")
     return {**data, **{k: v or "" for k, v in found.items()}, "isbn": isbn}
 
 
@@ -352,7 +359,7 @@ def insert_user_book(book_id, data, ignore=False):
 def add_to_collection(book_id, data):
     insert_user_book(book_id, data, ignore=True)
     db().commit()
-    flash("Das Buch ist schon im Katalog und wurde deiner Sammlung hinzugefügt.", "ok")
+    flash(_("This book is already in the catalog and was added to your collection."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
 
 
@@ -368,7 +375,7 @@ def book_new():
             return add_to_collection(result, data)
         return render_template("book_form.html", book=result, new=True)
     if not data["title"]:
-        errors.append("Titel ist ein Pflichtfeld.")
+        errors.append(_("Title is required."))
     if errors:
         for e in errors:
             flash(e, "error")
@@ -382,7 +389,7 @@ def book_new():
         (data["title"], data["author"], data["year"] or None, isbn, data["description"], cover_bytes, mime))
     insert_user_book(cur.lastrowid, data)
     db().commit()
-    flash("Buch gespeichert.", "ok")
+    flash(_("Book saved."), "ok")
     return redirect(url_for("book_detail", book_id=cur.lastrowid))
 
 
@@ -397,7 +404,7 @@ def book_edit(book_id):
     if request.form.get("action") == "lookup":
         return render_template("book_form.html", book=do_lookup(data, book_id), new=False)
     if not data["title"]:
-        errors.append("Titel ist ein Pflichtfeld.")
+        errors.append(_("Title is required."))
     if errors:
         for e in errors:
             flash(e, "error")
@@ -408,14 +415,14 @@ def book_edit(book_id):
                      (data["title"], data["author"], data["year"] or None,
                       normalize_isbn(data["isbn"]), data["description"], book_id))
     except sqlite3.IntegrityError:
-        flash("Ein anderes Buch mit dieser ISBN existiert bereits.", "error")
+        flash(_("Another book with this ISBN already exists."), "error")
         return render_template("book_form.html", book=data, new=False)
     if cover_bytes:
         db().execute("UPDATE books SET cover=?, cover_mime=? WHERE id=?", (cover_bytes, mime, book_id))
     db().execute("UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
                  (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id))
     db().commit()
-    flash("Änderungen gespeichert.", "ok")
+    flash(_("Changes saved."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
 
 
@@ -427,15 +434,15 @@ def users():
     if request.method == "POST":
         name, password = request.form.get("username", "").strip(), request.form.get("password", "")
         if not name or len(password) < 4:
-            flash("Benutzername und Passwort (mind. 4 Zeichen) angeben.", "error")
+            flash(_("Enter a username and a password (at least 4 characters)."), "error")
         else:
             try:
                 db().execute("INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
                              (name, generate_password_hash(password), int("is_admin" in request.form)))
                 db().commit()
-                flash(f"Benutzer „{name}“ angelegt.", "ok")
+                flash(_("User “%(name)s” created.", name=name), "ok")
             except sqlite3.IntegrityError:
-                flash("Benutzername existiert bereits.", "error")
+                flash(_("Username already exists."), "error")
         return redirect(url_for("users"))
     rows = db().execute(
         """SELECT u.id, u.username, u.is_admin, COUNT(ub.book_id) AS books
@@ -448,21 +455,21 @@ def users():
 @admin_required
 def user_action(user_id, action):
     if user_id == g.user["id"] and action in ("delete", "toggle_admin"):
-        flash("Du kannst dich nicht selbst löschen oder dir die Admin-Rechte entziehen.", "error")
+        flash(_("You cannot delete yourself or remove your own admin rights."), "error")
     elif action == "delete":
         db().execute("DELETE FROM users WHERE id = ?", (user_id,))
         remove_orphans()
-        flash("Benutzer gelöscht.", "ok")
+        flash(_("User deleted."), "ok")
     elif action == "toggle_admin":
         db().execute("UPDATE users SET is_admin = 1 - is_admin WHERE id = ?", (user_id,))
     elif action == "password":
         password = request.form.get("password", "")
         if len(password) < 4:
-            flash("Passwort muss mindestens 4 Zeichen haben.", "error")
+            flash(_("Password must be at least 4 characters long."), "error")
         else:
             db().execute("UPDATE users SET password_hash = ? WHERE id = ?",
                          (generate_password_hash(password), user_id))
-            flash("Passwort zurückgesetzt.", "ok")
+            flash(_("Password reset."), "ok")
     else:
         abort(404)
     db().commit()

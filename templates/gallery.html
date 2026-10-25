@@ -9,18 +9,18 @@
 
 {% block content %}
 <div class="gallery-head">
-  <h2>{% if q %}Suche: „{{ q }}“{% else %}Meine Bücher{% endif %}</h2>
-  <span class="muted">{{ books|length }} {{ "Buch" if books|length == 1 else "Bücher" }}</span>
+  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% else %}{{ _("My books") }}{% endif %}</h2>
+  <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
 </div>
 
 <div class="filters">
-  <div role="group" aria-label="Filter gelesen">
-    {{ choice("read", "", "Alle") }}{{ choice("read", "1", "Gelesen", icons.read) }}{{ choice("read", "0", "Ungelesen") }}
+  <div role="group" aria-label="{{ _('Filter read') }}">
+    {{ choice("read", "", _("All")) }}{{ choice("read", "1", _("Read"), icons.read) }}{{ choice("read", "0", _("Unread")) }}
   </div>
-  <div role="group" aria-label="Filter Besitz">
-    {{ choice("owned", "", "Alle") }}{{ choice("owned", "1", "In Besitz", icons.owned) }}{{ choice("owned", "0", "Nicht in Besitz") }}
+  <div role="group" aria-label="{{ _('Filter owned') }}">
+    {{ choice("owned", "", _("All")) }}{{ choice("owned", "1", _("Owned"), icons.owned) }}{{ choice("owned", "0", _("Not owned")) }}
   </div>
-  {% if filters %}<a href="{{ gallery_url(read='', owned='') }}" class="reset">Filter zurücksetzen</a>{% endif %}
+  {% if filters %}<a href="{{ gallery_url(read='', owned='') }}" class="reset">{{ _("Reset filters") }}</a>{% endif %}
 </div>
 
 {% if books %}
@@ -28,7 +28,7 @@
   {% for b in books %}
   <a class="tile" href="{{ url_for('book_detail', book_id=b.id) }}" title="{{ b.title }} – {{ b.author }}">
     {% if b.has_cover %}
-    <img src="{{ url_for('cover', book_id=b.id) }}" alt="Cover: {{ b.title }}" loading="lazy">
+    <img src="{{ url_for('cover', book_id=b.id) }}" alt="{{ _('Cover: %(title)s', title=b.title) }}" loading="lazy">
     {% else %}
     <div class="placeholder"><strong>{{ b.title }}</strong><span>{{ b.author }}</span></div>
     {% endif %}
@@ -38,8 +38,8 @@
       {% if b.rating or b.is_read or b.is_owned %}
       <span class="meta">
         {% if b.rating %}<span class="stars">{{ "★" * b.rating }}</span>{% endif %}
-        {% if b.is_read %}<span title="Gelesen" aria-label="Gelesen">{{ icons.read() }}</span>{% endif %}
-        {% if b.is_owned %}<span title="In meinem Besitz" aria-label="In meinem Besitz">{{ icons.owned() }}</span>{% endif %}
+        {% if b.is_read %}<span title="{{ _('Read') }}" aria-label="{{ _('Read') }}">{{ icons.read() }}</span>{% endif %}
+        {% if b.is_owned %}<span title="{{ _('I own it') }}" aria-label="{{ _('I own it') }}">{{ icons.owned() }}</span>{% endif %}
       </span>
       {% endif %}
     </div>
@@ -47,8 +47,8 @@
   {% endfor %}
 </div>
 {% elif q or filters %}
-<p class="muted">Nichts gefunden. <a href="{{ url_for('gallery') }}">Alle Bücher anzeigen</a></p>
+<p class="muted">{{ _("Nothing found.") }} <a href="{{ url_for('gallery') }}">{{ _("Show all books") }}</a></p>
 {% else %}
-<p class="muted">Noch keine Bücher. <a href="{{ url_for('book_new') }}">Füge dein erstes Buch hinzu</a> – am schnellsten per ISBN.</p>
+<p class="muted">{{ _("No books yet.") }} <a href="{{ url_for('book_new') }}">{{ _("Add your first book") }}</a> – {{ _("fastest by ISBN.") }}</p>
 {% endif %}
 {% endblock %}

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% import "icons.html" as icons %}
-{% set crumbs = [("Neues Buch", None)] if new
-   else [(book.title, url_for('book_detail', book_id=book.id)), ("Bearbeiten", None)] %}
-{% block title %}{{ "Neues Buch" if new else "Bearbeiten" }} · {% endblock %}
+{% set crumbs = [(_("New book"), None)] if new
+   else [(book.title, url_for('book_detail', book_id=book.id)), (_("Edit"), None)] %}
+{% block title %}{{ _("New book") if new else _("Edit") }} · {% endblock %}
 {% block content %}
 <article>
-  <h2>{{ "Neues Buch" if new else "Buch bearbeiten" }}</h2>
+  <h2>{{ _("New book") if new else _("Edit book") }}</h2>
   <form method="post" enctype="multipart/form-data"
         action="{{ url_for('book_new') if new else url_for('book_edit', book_id=book.id) }}">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -13,50 +13,50 @@
 
     <label for="isbn">ISBN</label>
     <fieldset role="group" class="isbn-group">
-      <input id="isbn" name="isbn" value="{{ book.isbn or '' }}" placeholder="z. B. 978-3-16-148410-0"
+      <input id="isbn" name="isbn" value="{{ book.isbn or '' }}" placeholder="{{ _('e.g. 978-3-16-148410-0') }}"
              aria-describedby="isbn-hint">
-      <button type="submit" name="action" value="lookup" formnovalidate>Nachschlagen</button>
+      <button type="submit" name="action" value="lookup" formnovalidate>{{ _("Look up") }}</button>
     </fieldset>
-    <small id="isbn-hint" class="muted">ISBN-10 oder ISBN-13 – Bindestriche und Leerzeichen sind erlaubt. „Nachschlagen“ holt Daten und Cover von OpenLibrary.</small>
+    <small id="isbn-hint" class="muted">{{ _("ISBN-10 or ISBN-13 – hyphens and spaces are allowed. “Look up” fetches data and cover from OpenLibrary.") }}</small>
 
     <div class="form-grid">
       <div class="form-cover">
         {% if book.cover_url %}
-        <img src="{{ book.cover_url }}" alt="Cover-Vorschau">
+        <img src="{{ book.cover_url }}" alt="{{ _('Cover preview') }}">
         {% elif book.cover and book.id %}
-        <img src="{{ url_for('cover', book_id=book.id) }}" alt="Aktuelles Cover">
+        <img src="{{ url_for('cover', book_id=book.id) }}" alt="{{ _('Current cover') }}">
         {% else %}
-        <div class="placeholder"><span>Kein Cover</span></div>
+        <div class="placeholder"><span>{{ _("No cover") }}</span></div>
         {% endif %}
-        <label>Cover hochladen <input type="file" name="cover" accept="image/*"></label>
+        <label>{{ _("Upload cover") }} <input type="file" name="cover" accept="image/*"></label>
       </div>
       <div>
-        <label>Titel * <input name="title" value="{{ book.title or '' }}" required></label>
+        <label>{{ _("Title") }} * <input name="title" value="{{ book.title or '' }}" required></label>
         <div class="grid">
-          <label>Autor <input name="author" value="{{ book.author or '' }}"></label>
-          <label>Erscheinungsjahr <input name="year" value="{{ book.year or '' }}" inputmode="numeric" pattern="-?\d{1,4}"></label>
+          <label>{{ _("Author") }} <input name="author" value="{{ book.author or '' }}"></label>
+          <label>{{ _("Year of publication") }} <input name="year" value="{{ book.year or '' }}" inputmode="numeric" pattern="-?\d{1,4}"></label>
         </div>
-        <label>Meine Bewertung
+        <label>{{ _("My rating") }}
           <select name="rating">
-            <option value="">– keine –</option>
+            <option value="">{{ _("– none –") }}</option>
             {% for i in range(5, 0, -1) %}
             <option value="{{ i }}" {{ 'selected' if book.rating == i }}>{{ "★" * i }}</option>
             {% endfor %}
           </select>
         </label>
         <div class="flags">
-          <label><input type="checkbox" role="switch" name="is_read" {{ 'checked' if book.is_read }}> {{ icons.read() }} Gelesen</label>
-          <label><input type="checkbox" role="switch" name="is_owned" {{ 'checked' if book.is_owned }}> {{ icons.owned() }} In meinem Besitz</label>
+          <label><input type="checkbox" role="switch" name="is_read" {{ 'checked' if book.is_read }}> {{ icons.read() }} {{ _("Read") }}</label>
+          <label><input type="checkbox" role="switch" name="is_owned" {{ 'checked' if book.is_owned }}> {{ icons.owned() }} {{ _("I own it") }}</label>
         </div>
-        <label>Beschreibung <small class="muted">(für alle Nutzer mit diesem Buch sichtbar)</small>
+        <label>{{ _("Description") }} <small class="muted">{{ _("(visible to all users who have this book)") }}</small>
           <textarea name="description" rows="6">{{ book.description or '' }}</textarea>
         </label>
       </div>
     </div>
 
     <div class="actions">
-      <button type="submit" name="action" value="save">Speichern</button>
-      <a href="{{ url_for('gallery') if new else url_for('book_detail', book_id=book.id) }}" role="button" class="secondary outline">Abbrechen</a>
+      <button type="submit" name="action" value="save">{{ _("Save") }}</button>
+      <a href="{{ url_for('gallery') if new else url_for('book_detail', book_id=book.id) }}" role="button" class="secondary outline">{{ _("Cancel") }}</a>
     </div>
   </form>
 </article>

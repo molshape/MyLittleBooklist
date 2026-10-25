@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="{{ get_locale() }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,12 +21,12 @@
         <li>
           <div class="search-wrap">
             <form action="{{ url_for('gallery') }}" role="search" id="search">
-              <input type="search" name="q" placeholder="Suchen …" value="{{ q or '' }}" aria-label="Bücher durchsuchen">
+              <input type="search" name="q" placeholder="{{ _('Search …') }}" value="{{ q or '' }}" aria-label="{{ _('Search books') }}">
             </form>
             {# keep active filters on a new search; outside the form, otherwise Pico's rounding breaks #}
             {% for key, value in (filters or {}).items() %}<input type="hidden" form="search" name="{{ key }}" value="{{ value }}">{% endfor %}
             {% if q %}
-            <a href="{{ gallery_url(q='') }}" class="clear-search" aria-label="Suche zurücksetzen" title="Suche zurücksetzen">
+            <a href="{{ gallery_url(q='') }}" class="clear-search" aria-label="{{ _('Clear search') }}" title="{{ _('Clear search') }}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </a>
             {% endif %}
@@ -36,17 +36,17 @@
       {% endif %}
       <ul>
         {% if g.user %}
-        <li><a href="{{ url_for('book_new') }}" role="button" class="add">+ Buch</a></li>
-        {% if g.user.is_admin %}<li><a href="{{ url_for('users') }}">Benutzer</a></li>{% endif %}
-        <li><a href="{{ url_for('account') }}" title="Konto">{{ g.user.username }}</a></li>
+        <li><a href="{{ url_for('book_new') }}" role="button" class="add">+ {{ _("Book") }}</a></li>
+        {% if g.user.is_admin %}<li><a href="{{ url_for('users') }}">{{ _("Users") }}</a></li>{% endif %}
+        <li><a href="{{ url_for('account') }}" title="{{ _('Account') }}">{{ g.user.username }}</a></li>
         <li>
           <form action="{{ url_for('logout') }}" method="post" class="inline">
             <input type="hidden" name="csrf" value="{{ csrf }}">
-            <button class="link" type="submit">Abmelden</button>
+            <button class="link" type="submit">{{ _("Log out") }}</button>
           </form>
         </li>
         {% endif %}
-        <li><button class="link theme-toggle" type="button" id="theme-toggle" aria-label="Hell/Dunkel umschalten">◐</button></li>
+        <li><button class="link theme-toggle" type="button" id="theme-toggle" aria-label="{{ _('Toggle light/dark mode') }}">◐</button></li>
       </ul>
     </nav>
   </header>
@@ -58,7 +58,7 @@
     {% if crumbs %}
     <nav aria-label="breadcrumb">
       <ul>
-        <li><a href="{{ url_for('gallery') }}">Meine Bücher</a></li>
+        <li><a href="{{ url_for('gallery') }}">{{ _("My books") }}</a></li>
         {% for label, href in crumbs %}
         <li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>
         {% endfor %}
