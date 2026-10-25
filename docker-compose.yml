@@ -1,5 +1,6 @@
 services:
   booklog:
+    image: ghcr.io/molshape/mylittlebooklist:latest
     build: .
     ports:
       - "8000:8000"
