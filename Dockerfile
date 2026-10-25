@@ -13,5 +13,5 @@ COPY static static
 ENV PATH="/app/.venv/bin:$PATH" DB_PATH=/data/books.db
 VOLUME /data
 EXPOSE 8000
-# --preload: DB-Init läuft einmal vor dem Forken der Worker
+# --preload: DB init runs once before the workers are forked
 CMD ["gunicorn", "--preload", "--workers", "2", "--threads", "4", "--bind", "0.0.0.0:8000", "app:app"]

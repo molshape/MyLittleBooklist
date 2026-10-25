@@ -1,4 +1,4 @@
-"""My Little Booklist – kleine Bücherverwaltung für zu Hause."""
+"""My Little Booklist – a small home library manager."""
 
 import json
 import os
@@ -28,10 +28,10 @@ app.config.update(
     MAX_CONTENT_LENGTH=5 * 1024 * 1024,
 )
 if not os.environ.get("SECRET_KEY"):
-    app.logger.warning("SECRET_KEY nicht gesetzt – Sessions gelten nur bis zum Neustart.")
+    app.logger.warning("SECRET_KEY not set – sessions only last until the next restart.")
 
 
-# --- Datenbank ---------------------------------------------------------------
+# --- Database ----------------------------------------------------------------
 
 def db():
     if "db" not in g:
@@ -60,7 +60,7 @@ def init_db():
     password = os.environ.get("ADMIN_PASSWORD")
     if not password:
         password = secrets.token_urlsafe(12)
-        app.logger.warning("ADMIN_PASSWORD nicht gesetzt – generiert für '%s': %s", name, password)
+        app.logger.warning("ADMIN_PASSWORD not set – generated for '%s': %s", name, password)
     db().execute("INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 1)",
                  (name, generate_password_hash(password)))
     db().commit()
@@ -75,7 +75,7 @@ def normalize_isbn(raw):
 
 @app.template_filter("isbn")
 def format_isbn(isbn):
-    """Mit Bindestrichen nach offizieller ISBN-Bereichstabelle; ungültige ISBNs unverändert."""
+    """Hyphenated according to the official ISBN range table; invalid ISBNs unchanged."""
     try:
         return isbnlib.mask(isbn) or isbn
     except isbnlib.NotValidISBNError:
@@ -83,7 +83,7 @@ def format_isbn(isbn):
 
 
 def lookup_isbn(isbn):
-    """Liefert dict(title, author, year, cover_url) oder None, wenn unbekannt/offline."""
+    """Returns dict(title, author, year, cover_url), or None if unknown/offline."""
     url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
     try:
         with urlopen(Request(url, headers=USER_AGENT), timeout=10) as resp:
@@ -103,7 +103,7 @@ def lookup_isbn(isbn):
 
 
 def fetch_cover(url):
-    """Lädt ein Cover von OpenLibrary; nur diese Domain, damit der Server keine beliebigen URLs abruft."""
+    """Downloads a cover from OpenLibrary; only this domain, so the server never fetches arbitrary URLs."""
     if not url or not url.startswith(COVER_PREFIX):
         return None, None
     try:
@@ -161,7 +161,7 @@ def login():
         user = db().execute("SELECT * FROM users WHERE username = ?",
                             (request.form.get("username", "").strip(),)).fetchone()
         if user and check_password_hash(user["password_hash"], request.form.get("password", "")):
-            # Neue Session bei jedem Login (gegen Session-Fixation), 30 Tage gültig.
+            # Fresh session on every login (prevents session fixation), valid for 30 days.
             session.clear()
             session.permanent = True
             session["uid"] = user["id"]
@@ -196,9 +196,9 @@ def account():
     return render_template("account.html")
 
 
-# --- Bücher ------------------------------------------------------------------
+# --- Books -------------------------------------------------------------------
 
-FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL-Name -> Spalte in user_books
+FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_books
 
 
 @app.route("/")
@@ -208,7 +208,7 @@ def gallery():
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
     params = [g.user["id"], q, like, like, like, isbn_like, like]
-    # Filter je Flag: '1' = ja, '0' = nein, sonst alle
+    # Filter per flag: '1' = yes, '0' = no, otherwise all
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
     params += [int(v) for v in filters.values()]
@@ -225,7 +225,7 @@ def gallery():
 
 @app.template_global()
 def gallery_url(**changes):
-    """Galerie-URL mit den aktuellen Such-/Filterparametern, einzelne davon geändert ('' = entfernen)."""
+    """Gallery URL with the current search/filter parameters, some of them changed ('' = remove)."""
     args = {**request.args.to_dict(), **changes}
     return url_for("gallery", **{k: v for k, v in args.items() if v})
 
@@ -272,7 +272,7 @@ def set_flag(book_id, name):
     if name not in FLAGS:
         abort(404)
     owned_book(book_id)
-    # Spaltenname stammt aus der FLAGS-Whitelist, nie aus der URL
+    # Column name comes from the FLAGS whitelist, never from the URL
     db().execute(f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",
                  (int(request.form.get("value") == "1"), g.user["id"], book_id))
     db().commit()
@@ -295,7 +295,7 @@ def parse_rating(raw):
 
 
 def read_form():
-    """Formularfelder einlesen; liefert (felder, fehlerliste)."""
+    """Reads the form fields; returns (fields, list of errors)."""
     f = request.form
     data = {
         "isbn": f.get("isbn", "").strip(),
@@ -317,7 +317,7 @@ def read_form():
 
 
 def form_cover(data):
-    """Cover aus Upload oder (nach ISBN-Lookup) von OpenLibrary; (None, None) wenn keins."""
+    """Cover from the upload or (after an ISBN lookup) from OpenLibrary; (None, None) if there is none."""
     upload = request.files.get("cover")
     if upload and upload.filename:
         if not (upload.mimetype or "").startswith("image/"):
@@ -419,7 +419,7 @@ def book_edit(book_id):
     return redirect(url_for("book_detail", book_id=book_id))
 
 
-# --- Benutzerverwaltung (Admin) ---------------------------------------------
+# --- User management (admin) ------------------------------------------------
 
 @app.route("/users", methods=["GET", "POST"])
 @admin_required

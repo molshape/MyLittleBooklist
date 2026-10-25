@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %}My Little Booklist</title>
   <script>
-    // Theme vor dem Rendern setzen, damit nichts aufblitzt.
+    // Set the theme before rendering so nothing flashes.
     try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
@@ -23,7 +23,7 @@
             <form action="{{ url_for('gallery') }}" role="search" id="search">
               <input type="search" name="q" placeholder="Suchen …" value="{{ q or '' }}" aria-label="Bücher durchsuchen">
             </form>
-            {# aktive Filter bei neuer Suche behalten; außerhalb des Formulars, sonst bricht Picos Rundung #}
+            {# keep active filters on a new search; outside the form, otherwise Pico's rounding breaks #}
             {% for key, value in (filters or {}).items() %}<input type="hidden" form="search" name="{{ key }}" value="{{ value }}">{% endfor %}
             {% if q %}
             <a href="{{ gallery_url(q='') }}" class="clear-search" aria-label="Suche zurücksetzen" title="Suche zurücksetzen">
