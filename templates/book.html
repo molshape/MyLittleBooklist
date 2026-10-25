@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "icons.html" as icons %}
 {% set crumbs = [(book.title, None)] %}
 {% block title %}{{ book.title }} · {% endblock %}
 {% block content %}
@@ -22,6 +23,21 @@
               title="{{ 'Bewertung entfernen' if book.rating == i else i ~ ' von 5' }}">★</button>
       {% endfor %}
     </form>
+
+    <div class="flags">
+      {% for name, column, label, icon in [("read", "is_read", "Gelesen", icons.read),
+                                           ("owned", "is_owned", "In meinem Besitz", icons.owned)] %}
+      <form method="post" action="{{ url_for('set_flag', book_id=book.id, name=name) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>
+          <input type="checkbox" role="switch" name="value" value="1" {{ 'checked' if book[column] }}
+                 onchange="this.form.submit()">
+          {{ icon() }} {{ label }}
+        </label>
+        <noscript><button type="submit" class="secondary outline">Speichern</button></noscript>
+      </form>
+      {% endfor %}
+    </div>
 
     {% if book.description %}<p class="description">{{ book.description }}</p>{% endif %}
 

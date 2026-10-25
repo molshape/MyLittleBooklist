@@ -17,10 +17,12 @@ CREATE TABLE IF NOT EXISTS books (
     cover_mime  TEXT
 );
 
--- Sammlung eines Users inkl. persönlicher Bewertung (1–5, NULL = keine).
+-- Sammlung eines Users inkl. persönlicher Bewertung (1–5, NULL = keine) und Flags.
 CREATE TABLE IF NOT EXISTS user_books (
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
-    rating  INTEGER CHECK (rating BETWEEN 1 AND 5),
+    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    book_id  INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    rating   INTEGER CHECK (rating BETWEEN 1 AND 5),
+    is_read  INTEGER NOT NULL DEFAULT 0,
+    is_owned INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY (user_id, book_id)
 );

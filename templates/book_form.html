@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "icons.html" as icons %}
 {% set crumbs = [("Neues Buch", None)] if new
    else [(book.title, url_for('book_detail', book_id=book.id)), ("Bearbeiten", None)] %}
 {% block title %}{{ "Neues Buch" if new else "Bearbeiten" }} · {% endblock %}
@@ -43,6 +44,10 @@
             {% endfor %}
           </select>
         </label>
+        <div class="flags">
+          <label><input type="checkbox" role="switch" name="is_read" {{ 'checked' if book.is_read }}> {{ icons.read() }} Gelesen</label>
+          <label><input type="checkbox" role="switch" name="is_owned" {{ 'checked' if book.is_owned }}> {{ icons.owned() }} In meinem Besitz</label>
+        </div>
         <label>Beschreibung <small class="muted">(für alle Nutzer mit diesem Buch sichtbar)</small>
           <textarea name="description" rows="6">{{ book.description or '' }}</textarea>
         </label>

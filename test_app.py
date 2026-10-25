@@ -42,11 +42,22 @@ def test_flow(client, monkeypatch):
     post(client, "/users", username="bob", password="bobpw")
 
     # Manuelles Buch anlegen und finden
+    assert 'name="is_owned" checked' in client.get("/book/new").text  # Default: in Besitz
     r = post(client, "/book/new", title="Der Zauberberg", author="Thomas Mann", year="1924",
-             description="Davos", rating="4", action="save")
+             description="Davos", rating="4", is_owned="on", action="save")
     assert "Der Zauberberg" in r.text
     assert "Der Zauberberg" in client.get("/?q=davos").text
     assert "Der Zauberberg" not in client.get("/?q=Kafka").text
+
+    # Flags umschalten und filtern (auch kombiniert mit Suche)
+    assert "Der Zauberberg" not in client.get("/?read=1").text
+    post(client, "/book/1/flag/read", value="1")
+    assert "Der Zauberberg" in client.get("/?read=1&q=mann").text
+    assert "Der Zauberberg" not in client.get("/?read=0").text
+    post(client, "/book/1/flag/owned")  # Switch aus -> kein value
+    assert "Der Zauberberg" in client.get("/?owned=0").text
+    with client.session_transaction() as s:
+        assert client.post("/book/1/flag/rating", data={"csrf": s["csrf"]}).status_code == 404
 
     # ISBN-Lookup (OpenLibrary gemockt) füllt das Formular vor
     monkeypatch.setattr(bookapp, "lookup_isbn", lambda isbn: {
@@ -62,6 +73,16 @@ def test_flow(client, monkeypatch):
     assert "Der Zauberberg" not in client.get("/").text
     assert client.get("/book/1").status_code == 404
     assert client.get("/users").status_code == 403
+
+
+def test_demo_ratios():
+    # Demo: je User 80 % in Besitz, 60 % gelesen; Bewertung nur für gelesene Bücher
+    for user in ("demo", "anna"):
+        entries = [users[user] for *_, users in bookapp.DEMO_BOOKS if user in users]
+        assert len(entries) == 10
+        assert sum(owned for _, _, owned in entries) == 8
+        assert sum(read for _, read, _ in entries) == 6
+        assert all(read for rating, read, _ in entries if rating)
 
 
 def test_normalize_isbn():
