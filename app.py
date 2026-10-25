@@ -32,7 +32,7 @@ if not os.environ.get("SECRET_KEY"):
     app.logger.warning("SECRET_KEY not set – sessions only last until the next restart.")
 
 # UI language follows the browser; every folder in translations/ is picked up automatically
-babel = Babel(
+babel: Babel = Babel(
     app,
     locale_selector=lambda: request.accept_languages.best_match(
         [str(locale) for locale in babel.list_translations()]
