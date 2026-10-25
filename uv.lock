@@ -208,7 +208,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mytinybooklog"
+name = "mylittlebooklist"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

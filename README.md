@@ -1,4 +1,4 @@
-# 📚 MyTinyBookLog
+# 📚 My Little Booklist
 
 Kleine, selbst gehostete Verwaltung der eigenen Bücher (nur bibliographische Daten, keine E-Books).
 
