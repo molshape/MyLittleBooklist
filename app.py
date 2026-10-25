@@ -5,13 +5,16 @@ import os
 import re
 import secrets
 import sqlite3
+from collections.abc import Callable
 from datetime import timedelta
 from functools import wraps
+from typing import Any, cast
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 import isbnlib
 from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
+from flask.typing import ResponseReturnValue
 from flask_babel import Babel, get_locale
 from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -44,25 +47,25 @@ app.jinja_env.globals["get_locale"] = get_locale
 # --- Database ----------------------------------------------------------------
 
 
-def db():
+def db() -> sqlite3.Connection:
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         g.db.execute("PRAGMA foreign_keys = ON")
-    return g.db
+    return cast(sqlite3.Connection, g.db)
 
 
 @app.teardown_appcontext
-def close_db(_exc):
+def close_db(_exc: BaseException | None) -> None:
     if (conn := g.pop("db", None)) is not None:
         conn.close()
 
 
-def remove_orphans():
+def remove_orphans() -> None:
     db().execute("DELETE FROM books WHERE id NOT IN (SELECT book_id FROM user_books)")
 
 
-def init_db():
+def init_db() -> None:
     with open(os.path.join(app.root_path, "schema.sql"), encoding="utf-8") as f:
         db().executescript(f.read())
     if db().execute("SELECT 1 FROM users").fetchone():
@@ -82,13 +85,13 @@ def init_db():
 # --- OpenLibrary -------------------------------------------------------------
 
 
-def normalize_isbn(raw):
+def normalize_isbn(raw: str | None) -> str | None:
     isbn = re.sub(r"[^0-9Xx]", "", raw or "").upper()
     return isbn if len(isbn) in (10, 13) else None
 
 
 @app.template_filter("isbn")
-def format_isbn(isbn):
+def format_isbn(isbn: str) -> str:
     """Hyphenated according to the official ISBN range table; invalid ISBNs unchanged."""
     try:
         return isbnlib.mask(isbn) or isbn
@@ -96,7 +99,7 @@ def format_isbn(isbn):
         return isbn
 
 
-def lookup_isbn(isbn):
+def lookup_isbn(isbn: str) -> dict[str, Any] | None:
     """Returns dict(title, author, year, cover_url), or None if unknown/offline."""
     url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
     try:
@@ -116,7 +119,7 @@ def lookup_isbn(isbn):
     }
 
 
-def fetch_cover(url):
+def fetch_cover(url: str | None) -> tuple[bytes | None, str | None]:
     """Downloads a cover from OpenLibrary; only this domain, so the server never fetches arbitrary URLs."""
     if not url or not url.startswith(COVER_PREFIX):
         return None, None
@@ -132,7 +135,7 @@ def fetch_cover(url):
 
 
 @app.before_request
-def load_user_and_check_csrf():
+def load_user_and_check_csrf() -> None:
     g.user = None
     if uid := session.get("uid"):
         g.user = db().execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
@@ -145,15 +148,15 @@ def load_user_and_check_csrf():
 
 
 @app.context_processor
-def inject_csrf():
+def inject_csrf() -> dict[str, str]:
     if "csrf" not in session:
         session["csrf"] = secrets.token_urlsafe(32)
     return {"csrf": session["csrf"]}
 
 
-def login_required(view):
+def login_required(view: Callable[..., ResponseReturnValue]) -> Callable[..., ResponseReturnValue]:
     @wraps(view)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> ResponseReturnValue:
         if g.user is None:
             return redirect(url_for("login", next=request.path))
         return view(*args, **kwargs)
@@ -161,10 +164,10 @@ def login_required(view):
     return wrapped
 
 
-def admin_required(view):
+def admin_required(view: Callable[..., ResponseReturnValue]) -> Callable[..., ResponseReturnValue]:
     @wraps(view)
     @login_required
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: Any, **kwargs: Any) -> ResponseReturnValue:
         if not g.user["is_admin"]:
             abort(403)
         return view(*args, **kwargs)
@@ -173,7 +176,7 @@ def admin_required(view):
 
 
 @app.route("/login", methods=["GET", "POST"])
-def login():
+def login() -> ResponseReturnValue:
     if request.method == "POST":
         user = (
             db()
@@ -198,14 +201,14 @@ def login():
 
 
 @app.post("/logout")
-def logout():
+def logout() -> ResponseReturnValue:
     session.clear()
     return redirect(url_for("login"))
 
 
 @app.route("/account", methods=["GET", "POST"])
 @login_required
-def account():
+def account() -> ResponseReturnValue:
     if request.method == "POST":
         new = request.form.get("new_password", "")
         if not check_password_hash(g.user["password_hash"], request.form.get("old_password", "")):
@@ -230,7 +233,7 @@ FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_b
 
 @app.route("/")
 @login_required
-def gallery():
+def gallery() -> ResponseReturnValue:
     q = request.args.get("q", "").strip()
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
@@ -256,14 +259,14 @@ def gallery():
 
 
 @app.template_global()
-def gallery_url(**changes):
+def gallery_url(**changes: str) -> str:
     """Gallery URL with the current search/filter parameters, some of them changed ('' = remove)."""
-    args = {**request.args.to_dict(), **changes}
+    args: dict[str, Any] = {**request.args.to_dict(), **changes}
     return url_for("gallery", **{k: v for k, v in args.items() if v})
 
 
-def owned_book(book_id):
-    book = (
+def owned_book(book_id: int) -> sqlite3.Row:
+    book: sqlite3.Row | None = (
         db()
         .execute(
             """SELECT b.*, ub.rating, ub.is_read, ub.is_owned FROM books b
@@ -279,13 +282,13 @@ def owned_book(book_id):
 
 @app.route("/book/<int:book_id>")
 @login_required
-def book_detail(book_id):
+def book_detail(book_id: int) -> ResponseReturnValue:
     return render_template("book.html", book=owned_book(book_id))
 
 
 @app.route("/cover/<int:book_id>")
 @login_required
-def cover(book_id):
+def cover(book_id: int) -> ResponseReturnValue:
     book = owned_book(book_id)
     if not book["cover"]:
         abort(404)
@@ -297,7 +300,7 @@ def cover(book_id):
 
 @app.post("/book/<int:book_id>/rate")
 @login_required
-def rate(book_id):
+def rate(book_id: int) -> ResponseReturnValue:
     owned_book(book_id)
     db().execute(
         "UPDATE user_books SET rating = ? WHERE user_id = ? AND book_id = ?",
@@ -309,7 +312,7 @@ def rate(book_id):
 
 @app.post("/book/<int:book_id>/flag/<name>")
 @login_required
-def set_flag(book_id, name):
+def set_flag(book_id: int, name: str) -> ResponseReturnValue:
     if name not in FLAGS:
         abort(404)
     owned_book(book_id)
@@ -324,7 +327,7 @@ def set_flag(book_id, name):
 
 @app.post("/book/<int:book_id>/remove")
 @login_required
-def remove(book_id):
+def remove(book_id: int) -> ResponseReturnValue:
     owned_book(book_id)
     db().execute(
         "DELETE FROM user_books WHERE user_id = ? AND book_id = ?", (g.user["id"], book_id)
@@ -335,14 +338,14 @@ def remove(book_id):
     return redirect(url_for("gallery"))
 
 
-def parse_rating(raw):
+def parse_rating(raw: str | None) -> int | None:
     return int(raw) if raw in {"1", "2", "3", "4", "5"} else None
 
 
-def read_form():
+def read_form() -> tuple[dict[str, Any], list[str]]:
     """Reads the form fields; returns (fields, list of errors)."""
     f = request.form
-    data = {
+    data: dict[str, Any] = {
         "isbn": f.get("isbn", "").strip(),
         "title": f.get("title", "").strip(),
         "author": f.get("author", "").strip(),
@@ -361,7 +364,7 @@ def read_form():
     return data, errors
 
 
-def form_cover(data):
+def form_cover(data: dict[str, Any]) -> tuple[bytes | None, str | None]:
     """Cover from the upload or (after an ISBN lookup) from OpenLibrary; (None, None) if there is none."""
     upload = request.files.get("cover")
     if upload and upload.filename:
@@ -371,7 +374,7 @@ def form_cover(data):
     return fetch_cover(data["cover_url"])
 
 
-def do_lookup(data, book_id=None):
+def do_lookup(data: dict[str, Any], book_id: int | None = None) -> dict[str, Any] | int:
     isbn = normalize_isbn(data["isbn"])
     if not isbn:
         flash(_("Please enter a valid ISBN (10 or 13 digits)."), "error")
@@ -379,7 +382,7 @@ def do_lookup(data, book_id=None):
     if book_id is None:
         existing = db().execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()
         if existing:
-            return existing["id"]
+            return int(existing["id"])
     found = lookup_isbn(isbn)
     if not found:
         flash(_("Nothing found on OpenLibrary – please fill in manually."), "error")
@@ -388,7 +391,7 @@ def do_lookup(data, book_id=None):
     return {**data, **{k: v or "" for k, v in found.items()}, "isbn": isbn}
 
 
-def insert_user_book(book_id, data, ignore=False):
+def insert_user_book(book_id: int | None, data: dict[str, Any], ignore: bool = False) -> None:
     db().execute(
         f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"  # nosec B608
         " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
@@ -396,7 +399,7 @@ def insert_user_book(book_id, data, ignore=False):
     )
 
 
-def add_to_collection(book_id, data):
+def add_to_collection(book_id: int, data: dict[str, Any]) -> ResponseReturnValue:
     insert_user_book(book_id, data, ignore=True)
     db().commit()
     flash(_("This book is already in the catalog and was added to your collection."), "ok")
@@ -405,7 +408,7 @@ def add_to_collection(book_id, data):
 
 @app.route("/book/new", methods=["GET", "POST"])
 @login_required
-def book_new():
+def book_new() -> ResponseReturnValue:
     if request.method == "GET":
         return render_template("book_form.html", book={"is_owned": 1}, new=True)
     data, errors = read_form()
@@ -446,7 +449,7 @@ def book_new():
 
 @app.route("/book/<int:book_id>/edit", methods=["GET", "POST"])
 @login_required
-def book_edit(book_id):
+def book_edit(book_id: int) -> ResponseReturnValue:
     book = owned_book(book_id)
     if request.method == "GET":
         return render_template("book_form.html", book=book, new=False)
@@ -494,7 +497,7 @@ def book_edit(book_id):
 
 @app.route("/users", methods=["GET", "POST"])
 @admin_required
-def users():
+def users() -> ResponseReturnValue:
     if request.method == "POST":
         name, password = request.form.get("username", "").strip(), request.form.get("password", "")
         if not name or len(password) < 4:
@@ -524,7 +527,7 @@ def users():
 
 @app.post("/users/<int:user_id>/<action>")
 @admin_required
-def user_action(user_id, action):
+def user_action(user_id: int, action: str) -> ResponseReturnValue:
     if user_id == g.user["id"] and action in ("delete", "toggle_admin"):
         flash(_("You cannot delete yourself or remove your own admin rights."), "error")
     elif action == "delete":
