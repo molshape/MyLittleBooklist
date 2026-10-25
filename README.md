@@ -1,5 +1,7 @@
 # 📚 My Little Booklist
 
+[![CI](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml/badge.svg)](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml)
+
 A small, self-hosted web app to catalog the books on your shelf – for yourself, your family or a shared flat. It manages bibliographic data only (no e-books, no reading of files).
 
 Add a book by its ISBN and title, author, year, description and cover are fetched automatically from [Open Library](https://openlibrary.org). Everything lives in a single SQLite file, so a backup is just one copy.
@@ -28,6 +30,8 @@ git clone <repository-url> && cd MyLittleBooklist
 cp .env.example .env      # set SECRET_KEY and ADMIN_PASSWORD
 docker compose up -d --build
 ```
+
+Instead of building locally you can use the prebuilt image from the GitHub Container Registry, which CI publishes for every release tag: `docker compose pull && docker compose up -d`.
 
 Open http://localhost:8000 and log in with `ADMIN_USER` / `ADMIN_PASSWORD` from `.env`.
 
