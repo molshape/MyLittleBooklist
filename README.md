@@ -105,6 +105,10 @@ docker compose exec booklog python demo.py     # inside the running container
 - The admin account still comes from `ADMIN_USER` / `ADMIN_PASSWORD`.
 - The demo books are defined in `DEMO_BOOKS` in `demo.py`.
 
+## Contributing
+
+Bug reports, fixes, small improvements and new translations are welcome – the app is kept deliberately simple, though. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Credits
 
 Book data and covers via [Open Library](https://openlibrary.org) (Internet Archive). Cover images remain the property of their respective rights holders.
