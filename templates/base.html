@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %}MyTinyBookLog</title>
+  <script>
+    // Theme vor dem Rendern setzen, damit nichts aufblitzt.
+    try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='logo.svg') }}" type="image/svg+xml">
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul><li><a href="{{ url_for('gallery') }}" class="brand"><img src="{{ url_for('static', filename='logo.svg') }}" alt=""> MyTinyBookLog</a></li></ul>
+      {% if g.user %}
+      <ul class="search">
+        <li>
+          <div class="search-wrap">
+            <form action="{{ url_for('gallery') }}" role="search">
+              <input type="search" name="q" placeholder="Suchen …" value="{{ q or '' }}" aria-label="Bücher durchsuchen">
+            </form>
+            {% if q %}
+            <a href="{{ url_for('gallery') }}" class="clear-search" aria-label="Suche zurücksetzen" title="Suche zurücksetzen">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </a>
+            {% endif %}
+          </div>
+        </li>
+      </ul>
+      {% endif %}
+      <ul>
+        {% if g.user %}
+        <li><a href="{{ url_for('book_new') }}" role="button" class="add">+ Buch</a></li>
+        {% if g.user.is_admin %}<li><a href="{{ url_for('users') }}">Benutzer</a></li>{% endif %}
+        <li><a href="{{ url_for('account') }}" title="Konto">{{ g.user.username }}</a></li>
+        <li>
+          <form action="{{ url_for('logout') }}" method="post" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="link" type="submit">Abmelden</button>
+          </form>
+        </li>
+        {% endif %}
+        <li><button class="link theme-toggle" type="button" id="theme-toggle" aria-label="Hell/Dunkel umschalten">◐</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}" role="status">{{ message }}</div>
+    {% endfor %}
+    {% if crumbs %}
+    <nav aria-label="breadcrumb">
+      <ul>
+        <li><a href="{{ url_for('gallery') }}">Meine Bücher</a></li>
+        {% for label, href in crumbs %}
+        <li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      const root = document.documentElement;
+      const dark = root.dataset.theme ? root.dataset.theme === "dark"
+                                      : matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+      try { localStorage.setItem("theme", root.dataset.theme); } catch (e) {}
+    });
+  </script>
+</body>
+</html>

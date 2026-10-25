@@ -1,0 +1,12 @@
+services:
+  booklog:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - booklog-data:/data
+    restart: unless-stopped
+
+volumes:
+  booklog-data:

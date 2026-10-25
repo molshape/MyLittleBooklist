@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% set crumbs = [(book.title, None)] %}
+{% block title %}{{ book.title }} · {% endblock %}
+{% block content %}
+<article class="detail">
+  <div class="detail-cover">
+    {% if book.cover %}
+    <img src="{{ url_for('cover', book_id=book.id) }}" alt="Cover: {{ book.title }}">
+    {% else %}
+    <div class="placeholder big"><strong>{{ book.title }}</strong><span>{{ book.author }}</span></div>
+    {% endif %}
+  </div>
+  <div class="detail-info">
+    <h1>{{ book.title }}</h1>
+    <p class="author">{{ book.author }}{% if book.year %} · {{ book.year }}{% endif %}</p>
+
+    <form method="post" action="{{ url_for('rate', book_id=book.id) }}" class="rating" aria-label="Meine Bewertung">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% for i in range(1, 6) %}
+      <button type="submit" name="rating" value="{{ '' if book.rating == i else i }}"
+              class="star {{ 'on' if book.rating and i <= book.rating }}"
+              title="{{ 'Bewertung entfernen' if book.rating == i else i ~ ' von 5' }}">★</button>
+      {% endfor %}
+    </form>
+
+    {% if book.description %}<p class="description">{{ book.description }}</p>{% endif %}
+
+    <dl>
+      <dt>ISBN</dt><dd>{{ book.isbn|isbn if book.isbn else "–" }}</dd>
+    </dl>
+
+    <div class="actions">
+      <a href="{{ url_for('book_edit', book_id=book.id) }}" role="button">Bearbeiten</a>
+      <form method="post" action="{{ url_for('remove', book_id=book.id) }}" class="inline"
+            onsubmit="return confirm('Buch aus deiner Sammlung entfernen?')">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit" class="secondary outline">Aus Sammlung entfernen</button>
+      </form>
+    </div>
+  </div>
+</article>
+{% endblock %}

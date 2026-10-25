@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% set crumbs = [("Benutzer", None)] %}
+{% block title %}Benutzer · {% endblock %}
+{% block content %}
+<h2>Benutzer</h2>
+<div class="overflow-auto">
+<table>
+  <thead><tr><th>Name</th><th>Bücher</th><th>Rolle</th><th>Passwort zurücksetzen</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.username }}</td>
+    <td>{{ u.books }}</td>
+    <td>
+      <form method="post" action="{{ url_for('user_action', user_id=u.id, action='toggle_admin') }}" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit" class="link" {{ 'disabled' if u.id == g.user.id }}>{{ "Admin" if u.is_admin else "Nutzer" }}</button>
+      </form>
+    </td>
+    <td>
+      <form method="post" action="{{ url_for('user_action', user_id=u.id, action='password') }}" class="inline row">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="password" name="password" placeholder="Neues Passwort" minlength="4" required aria-label="Neues Passwort für {{ u.username }}">
+        <button type="submit" class="secondary">Setzen</button>
+      </form>
+    </td>
+    <td>
+      {% if u.id != g.user.id %}
+      <form method="post" action="{{ url_for('user_action', user_id=u.id, action='delete') }}" class="inline"
+            onsubmit="return confirm('Benutzer samt Sammlung löschen?')">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit" class="secondary outline">Löschen</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<article class="narrow">
+  <h3>Neuer Benutzer</h3>
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Benutzername <input name="username" required></label>
+    <label>Passwort <input type="password" name="password" minlength="4" autocomplete="new-password" required></label>
+    <label><input type="checkbox" name="is_admin"> Admin</label>
+    <button type="submit">Anlegen</button>
+  </form>
+</article>
+{% endblock %}
