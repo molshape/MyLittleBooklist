@@ -11,42 +11,34 @@ Kleine, selbst gehostete Verwaltung der eigenen Bücher (nur bibliographische Da
 ## Start mit Docker
 
 ```sh
-cp .env.example .env      # SECRET_KEY und ADMIN_PASSWORD setzen, DEMO=1 für Demo-Daten
+cp .env.example .env      # SECRET_KEY und ADMIN_PASSWORD setzen
 docker compose up -d --build
 ```
 
-→ http://localhost:8000. Demo-Logins: `admin/admin`, `demo/demo`, `anna/anna`.
-Die Datenbank liegt im Volume `booklog-data` (`/data/books.db`).
+→ http://localhost:8000, Login mit `ADMIN_USER`/`ADMIN_PASSWORD` aus `.env`.
+Die Datenbank wird beim ersten Start leer angelegt und liegt im Volume `booklog-data`
+(`/data/books.db`). Neu anfangen: `docker compose down -v`.
 
 ## Entwicklung (uv)
 
 ```sh
 uv sync
-DEMO=1 uv run flask --app app run --debug
+ADMIN_PASSWORD=admin uv run flask --app app run --debug   # legt books.db an
 uv run pytest
-uv run flask --app app seed-demo   # Demo-Daten in bestehende DB laden
 ```
 
-## Demo-Datenbank
+## Demo-Daten (optional)
 
-`demo.db` ist eine fertige Demo-Datenbank (12 Bücher inkl. Cover, Logins `admin/admin`,
-`demo/demo`, `anna/anna`). Sie ist **nicht im Git-Repository** (`.gitignore`), weil die
-Cover von OpenLibrary stammen, und muss nach dem Klonen einmal lokal erzeugt werden:
+`demo.py` füllt eine Datenbank mit zwei Beispielnutzern (`demo/demo`, `anna/anna`) und
+12 Büchern inkl. Cover – je Nutzer 10 Bücher, davon 8 in Besitz und 6 gelesen:
 
 ```sh
-rm -f demo.db
-DB_PATH=demo.db uv run flask --app app seed-demo                         # ~1 Minute
-uv run python -c "import sqlite3; sqlite3.connect('demo.db').execute('VACUUM')"  # verkleinern
+uv run python demo.py                          # lokal (DB_PATH, Standard books.db)
+docker compose exec booklog python demo.py     # im laufenden Container
 ```
 
-`seed-demo` fragt OpenLibrary gemäß deren Fair-Use-Regeln mit höchstens einer Anfrage pro
-Sekunde ab (Buchdaten + Cover je Buch). Die Demo-Bücher selbst stehen in `DEMO_BOOKS` in `app.py`.
-
-So wird sie verwendet:
-
-- `docker compose up --build` packt eine vorhandene `demo.db` ins Image.
-- Beim Start mit `DEMO=1` und noch **nicht vorhandener** Datenbank wird `demo.db` kopiert –
-  der Container ist sofort bereit.
-- Fehlt `demo.db`, wird die Demo stattdessen beim ersten Start über OpenLibrary erzeugt
-  (der Container braucht dann ~1 Minute, bis er antwortet).
-- Eine bestehende Datenbank wird nie überschrieben. Neu anfangen: `docker compose down -v`.
+- Dauert ~1 Minute und braucht Internet: Buchdaten und Cover kommen von OpenLibrary, gemäß
+  deren Fair-Use-Regeln mit höchstens einer Anfrage pro Sekunde.
+- Mehrfach ausführbar: vorhandene Nutzer und Bücher bleiben unverändert.
+- Der Admin kommt wie immer aus `ADMIN_USER`/`ADMIN_PASSWORD`.
+- Die Demo-Bücher stehen in `DEMO_BOOKS` in `demo.py`.

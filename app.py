@@ -4,9 +4,7 @@ import json
 import os
 import re
 import secrets
-import shutil
 import sqlite3
-import time
 from datetime import timedelta
 from functools import wraps
 from urllib.error import URLError
@@ -54,15 +52,9 @@ def remove_orphans():
 
 
 def init_db():
-    demo_db = os.path.join(app.root_path, "demo.db")
-    if os.environ.get("DEMO") == "1" and not os.path.exists(DB_PATH) and os.path.exists(demo_db):
-        shutil.copyfile(demo_db, DB_PATH)  # fertige Demo-DB statt 24 OpenLibrary-Anfragen
     with open(os.path.join(app.root_path, "schema.sql"), encoding="utf-8") as f:
         db().executescript(f.read())
     if db().execute("SELECT 1 FROM users").fetchone():
-        return
-    if os.environ.get("DEMO") == "1":
-        seed_demo()
         return
     name = os.environ.get("ADMIN_USER", "admin")
     password = os.environ.get("ADMIN_PASSWORD")
@@ -206,25 +198,41 @@ def account():
 
 # --- Bücher ------------------------------------------------------------------
 
+FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL-Name -> Spalte in user_books
+
+
 @app.route("/")
 @login_required
 def gallery():
     q = request.args.get("q", "").strip()
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
+    params = [g.user["id"], q, like, like, like, isbn_like, like]
+    # Filter je Flag: '1' = ja, '0' = nein, sonst alle
+    filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
+    flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
+    params += [int(v) for v in filters.values()]
     books = db().execute(
-        """SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover, ub.rating
+        f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
+                  ub.rating, ub.is_read, ub.is_owned
            FROM books b JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ?
-           WHERE ? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
-                 OR b.isbn LIKE ? OR b.description LIKE ?
+           WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
+                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
            ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",
-        (g.user["id"], q, like, like, like, isbn_like, like)).fetchall()
-    return render_template("gallery.html", books=books, q=q)
+        params).fetchall()
+    return render_template("gallery.html", books=books, q=q, filters=filters)
+
+
+@app.template_global()
+def gallery_url(**changes):
+    """Galerie-URL mit den aktuellen Such-/Filterparametern, einzelne davon geändert ('' = entfernen)."""
+    args = {**request.args.to_dict(), **changes}
+    return url_for("gallery", **{k: v for k, v in args.items() if v})
 
 
 def owned_book(book_id):
     book = db().execute(
-        """SELECT b.*, ub.rating FROM books b
+        """SELECT b.*, ub.rating, ub.is_read, ub.is_owned FROM books b
            JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ? WHERE b.id = ?""",
         (g.user["id"], book_id)).fetchone()
     if book is None:
@@ -258,6 +266,19 @@ def rate(book_id):
     return redirect(url_for("book_detail", book_id=book_id))
 
 
+@app.post("/book/<int:book_id>/flag/<name>")
+@login_required
+def set_flag(book_id, name):
+    if name not in FLAGS:
+        abort(404)
+    owned_book(book_id)
+    # Spaltenname stammt aus der FLAGS-Whitelist, nie aus der URL
+    db().execute(f"UPDATE user_books SET {FLAGS[name]} = ? WHERE user_id = ? AND book_id = ?",
+                 (int(request.form.get("value") == "1"), g.user["id"], book_id))
+    db().commit()
+    return redirect(url_for("book_detail", book_id=book_id))
+
+
 @app.post("/book/<int:book_id>/remove")
 @login_required
 def remove(book_id):
@@ -283,6 +304,8 @@ def read_form():
         "year": f.get("year", "").strip(),
         "description": f.get("description", "").strip(),
         "rating": parse_rating(f.get("rating")),
+        "is_read": int("is_read" in f),
+        "is_owned": int("is_owned" in f),
         "cover_url": f.get("cover_url", ""),
     }
     errors = []
@@ -320,9 +343,14 @@ def do_lookup(data, book_id=None):
     return {**data, **{k: v or "" for k, v in found.items()}, "isbn": isbn}
 
 
-def add_to_collection(book_id, rating):
-    db().execute("INSERT OR IGNORE INTO user_books (user_id, book_id, rating) VALUES (?, ?, ?)",
-                 (g.user["id"], book_id, rating))
+def insert_user_book(book_id, data, ignore=False):
+    db().execute(f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"
+                 " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
+                 (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]))
+
+
+def add_to_collection(book_id, data):
+    insert_user_book(book_id, data, ignore=True)
     db().commit()
     flash("Das Buch ist schon im Katalog und wurde deiner Sammlung hinzugefügt.", "ok")
     return redirect(url_for("book_detail", book_id=book_id))
@@ -332,12 +360,12 @@ def add_to_collection(book_id, rating):
 @login_required
 def book_new():
     if request.method == "GET":
-        return render_template("book_form.html", book={}, new=True)
+        return render_template("book_form.html", book={"is_owned": 1}, new=True)
     data, errors = read_form()
     if request.form.get("action") == "lookup":
         result = do_lookup(data)
         if isinstance(result, int):
-            return add_to_collection(result, data["rating"])
+            return add_to_collection(result, data)
         return render_template("book_form.html", book=result, new=True)
     if not data["title"]:
         errors.append("Titel ist ein Pflichtfeld.")
@@ -347,13 +375,12 @@ def book_new():
         return render_template("book_form.html", book=data, new=True)
     isbn = normalize_isbn(data["isbn"])
     if isbn and (existing := db().execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()):
-        return add_to_collection(existing["id"], data["rating"])
+        return add_to_collection(existing["id"], data)
     cover_bytes, mime = form_cover(data)
     cur = db().execute(
         "INSERT INTO books (title, author, year, isbn, description, cover, cover_mime) VALUES (?, ?, ?, ?, ?, ?, ?)",
         (data["title"], data["author"], data["year"] or None, isbn, data["description"], cover_bytes, mime))
-    db().execute("INSERT INTO user_books (user_id, book_id, rating) VALUES (?, ?, ?)",
-                 (g.user["id"], cur.lastrowid, data["rating"]))
+    insert_user_book(cur.lastrowid, data)
     db().commit()
     flash("Buch gespeichert.", "ok")
     return redirect(url_for("book_detail", book_id=cur.lastrowid))
@@ -385,8 +412,8 @@ def book_edit(book_id):
         return render_template("book_form.html", book=data, new=False)
     if cover_bytes:
         db().execute("UPDATE books SET cover=?, cover_mime=? WHERE id=?", (cover_bytes, mime, book_id))
-    db().execute("UPDATE user_books SET rating=? WHERE user_id=? AND book_id=?",
-                 (data["rating"], g.user["id"], book_id))
+    db().execute("UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
+                 (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id))
     db().commit()
     flash("Änderungen gespeichert.", "ok")
     return redirect(url_for("book_detail", book_id=book_id))
@@ -440,71 +467,6 @@ def user_action(user_id, action):
         abort(404)
     db().commit()
     return redirect(url_for("users"))
-
-
-# --- Demo-Daten --------------------------------------------------------------
-
-DEMO_BOOKS = [
-    # (isbn, title, author, year, description, {user: rating})
-    ("9780547928227", "The Hobbit", "J. R. R. Tolkien", 1937,
-     "Bilbo Beutlin wird von Gandalf und dreizehn Zwergen auf eine Reise zum Einsamen Berg mitgenommen.",
-     {"demo": 5, "anna": 4}),
-    ("9780261103573", "The Fellowship of the Ring", "J. R. R. Tolkien", 1954,
-     "Erster Teil des Herrn der Ringe: Frodo bricht auf, um den Einen Ring zu vernichten.", {"demo": 5}),
-    ("9780451524935", "Nineteen Eighty-Four", "George Orwell", 1949,
-     "Dystopie über Überwachung, Gedankenkontrolle und den Großen Bruder.", {"demo": 4, "anna": 5}),
-    ("9780441172719", "Dune", "Frank Herbert", 1965,
-     "Wüstenplanet Arrakis, das Spice und der Aufstieg von Paul Atreides.", {"demo": 5}),
-    ("9780345391803", "The Hitchhiker's Guide to the Galaxy", "Douglas Adams", 1979,
-     "Kurz bevor die Erde gesprengt wird, trampt Arthur Dent ins All. Don't panic!", {"demo": 4, "anna": 5}),
-    ("9780743273565", "The Great Gatsby", "F. Scott Fitzgerald", 1925,
-     "Jay Gatsby, Daisy Buchanan und der amerikanische Traum in den Roaring Twenties.", {"anna": 3}),
-    ("9780141439518", "Pride and Prejudice", "Jane Austen", 1813,
-     "Elizabeth Bennet und Mr. Darcy – Stolz und Vorurteil.", {"anna": 5}),
-    ("9780061120084", "To Kill a Mockingbird", "Harper Lee", 1960,
-     "Scout Finch erlebt, wie ihr Vater einen zu Unrecht angeklagten Schwarzen verteidigt.", {"demo": 4}),
-    ("9780553380163", "A Brief History of Time", "Stephen Hawking", 1988,
-     "Vom Urknall bis zu Schwarzen Löchern – Kosmologie für alle.", {"demo": 3}),
-    ("9780316769488", "The Catcher in the Rye", "J. D. Salinger", 1951,
-     "Holden Caulfield irrt drei Tage durch New York.", {"demo": 3}),
-    ("9780140449136", "Crime and Punishment", "Fjodor Dostojewski", 1866,
-     "Raskolnikow begeht einen Mord und ringt mit Schuld und Gewissen.", {"anna": 4}),
-    ("9780439708180", "Harry Potter and the Sorcerer's Stone", "J. K. Rowling", 1997,
-     "Harry erfährt an seinem elften Geburtstag, dass er ein Zauberer ist.", {"demo": 4, "anna": 4}),
-]
-
-
-def seed_demo():
-    """Demo-User admin/admin, demo/demo, anna/anna plus Beispielbücher. Cover kommen von OpenLibrary (falls online)."""
-    ids = {}
-    for name, is_admin in (("admin", 1), ("demo", 0), ("anna", 0)):
-        db().execute("INSERT OR IGNORE INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
-                     (name, generate_password_hash(name), is_admin))
-        ids[name] = db().execute("SELECT id FROM users WHERE username = ?", (name,)).fetchone()["id"]
-    for isbn, title, author, year, desc, ratings in DEMO_BOOKS:
-        if db().execute("SELECT 1 FROM books WHERE isbn = ?", (isbn,)).fetchone():
-            continue
-        # OpenLibrary Fair Use: höchstens 1 Anfrage pro Sekunde
-        found = lookup_isbn(isbn)
-        time.sleep(1)
-        cover_bytes, mime = fetch_cover(found["cover_url"] if found else None)
-        time.sleep(1)
-        cur = db().execute(
-            "INSERT INTO books (title, author, year, isbn, description, cover, cover_mime) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (title, author, year, isbn, desc, cover_bytes, mime))
-        for name, rating in ratings.items():
-            db().execute("INSERT INTO user_books (user_id, book_id, rating) VALUES (?, ?, ?)",
-                         (ids[name], cur.lastrowid, rating))
-        app.logger.info("Demo-Buch: %s (%s)", title, "mit Cover" if cover_bytes else "ohne Cover")
-    db().commit()
-
-
-@app.cli.command("seed-demo")
-def seed_demo_command():
-    """Demo-Daten in die Datenbank laden."""
-    init_db()
-    seed_demo()
-    print("Demo-Daten geladen. Logins: admin/admin, demo/demo, anna/anna")
 
 
 with app.app_context():

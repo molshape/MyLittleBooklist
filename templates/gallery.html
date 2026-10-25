@@ -1,9 +1,28 @@
 {% extends "base.html" %}
+{% import "icons.html" as icons %}
+
+{% macro choice(key, value, label, icon=None) -%}
+<a href="{{ gallery_url(**{key: value}) }}" role="button"
+   {% if filters.get(key, '') == value %}aria-current="true"{% else %}class="secondary outline"{% endif %}>
+  {%- if icon %}{{ icon() }} {% endif %}{{ label }}</a>
+{%- endmacro %}
+
 {% block content %}
 <div class="gallery-head">
   <h2>{% if q %}Suche: „{{ q }}“{% else %}Meine Bücher{% endif %}</h2>
   <span class="muted">{{ books|length }} {{ "Buch" if books|length == 1 else "Bücher" }}</span>
 </div>
+
+<div class="filters">
+  <div role="group" aria-label="Filter gelesen">
+    {{ choice("read", "", "Alle") }}{{ choice("read", "1", "Gelesen", icons.read) }}{{ choice("read", "0", "Ungelesen") }}
+  </div>
+  <div role="group" aria-label="Filter Besitz">
+    {{ choice("owned", "", "Alle") }}{{ choice("owned", "1", "In Besitz", icons.owned) }}{{ choice("owned", "0", "Nicht in Besitz") }}
+  </div>
+  {% if filters %}<a href="{{ gallery_url(read='', owned='') }}" class="reset">Filter zurücksetzen</a>{% endif %}
+</div>
+
 {% if books %}
 <div class="gallery">
   {% for b in books %}
@@ -16,12 +35,18 @@
     <div class="caption">
       <span class="t">{{ b.title }}</span>
       <span class="a">{{ b.author }}</span>
-      {% if b.rating %}<span class="stars">{{ "★" * b.rating }}</span>{% endif %}
+      {% if b.rating or b.is_read or b.is_owned %}
+      <span class="meta">
+        {% if b.rating %}<span class="stars">{{ "★" * b.rating }}</span>{% endif %}
+        {% if b.is_read %}<span title="Gelesen" aria-label="Gelesen">{{ icons.read() }}</span>{% endif %}
+        {% if b.is_owned %}<span title="In meinem Besitz" aria-label="In meinem Besitz">{{ icons.owned() }}</span>{% endif %}
+      </span>
+      {% endif %}
     </div>
   </a>
   {% endfor %}
 </div>
-{% elif q %}
+{% elif q or filters %}
 <p class="muted">Nichts gefunden. <a href="{{ url_for('gallery') }}">Alle Bücher anzeigen</a></p>
 {% else %}
 <p class="muted">Noch keine Bücher. <a href="{{ url_for('book_new') }}">Füge dein erstes Buch hinzu</a> – am schnellsten per ISBN.</p>

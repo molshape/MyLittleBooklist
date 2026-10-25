@@ -1,4 +1,12 @@
-:root { --star: #f5b301; --radius: 10px; }
+:root { --star: #f5b301; --read: #2e9e5b; --radius: 10px; }
+
+/* Strich-Icons (templates/icons.html) */
+.icon {
+  width: 1.1em; height: 1.1em; vertical-align: -.2em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.icon-read { color: var(--read); }
+.icon-owned { color: var(--pico-primary); }
 
 /* Navigation */
 nav { flex-wrap: wrap; gap: .5rem; }
@@ -79,6 +87,15 @@ button.link {
 .caption .t { font-weight: 600; }
 .caption .a { color: var(--pico-muted-color); }
 .stars { color: var(--star); }
+.caption .meta { display: flex; align-items: center; gap: .4rem; }
+
+/* Filterleiste */
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }
+.filters [role=group] { width: auto; margin: 0; }
+.filters [role=button] { padding: .3rem .8rem; font-size: .85rem; white-space: nowrap; }
+.filters [role=button]:hover { transform: none; box-shadow: none; }
+.filters [aria-current] .icon { color: inherit; }
+.filters .reset { font-size: .85rem; }
 
 /* Detailseite */
 .detail { display: grid; grid-template-columns: minmax(180px, 300px) 1fr; gap: 2rem; align-items: start; }
@@ -95,6 +112,10 @@ button.link {
 .rating .star.on { color: var(--star); }
 .rating:hover .star { color: var(--star); }
 .rating .star:hover ~ .star { color: var(--pico-muted-border-color); }
+.flags { display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; margin-bottom: 1rem; }
+.flags form { margin: 0; }
+.flags label { display: flex; align-items: center; gap: .4rem; margin: 0; cursor: pointer; }
+.flags input[role=switch] { margin: 0; }
 .actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
 .actions > *, .actions button { margin: 0; width: auto; }
 
