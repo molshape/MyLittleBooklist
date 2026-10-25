@@ -1,6 +1,6 @@
 :root { --star: #f5b301; --read: #2e9e5b; --radius: 10px; }
 
-/* Strich-Icons (templates/icons.html) */
+/* Line icons (templates/icons.html) */
 .icon {
   width: 1.1em; height: 1.1em; vertical-align: -.2em; flex: none;
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
@@ -19,8 +19,8 @@ nav .search li, nav .search form { width: 100%; max-width: 26rem; }
 nav .search form, nav .search input { margin: 0; }
 nav .search .search-wrap { position: relative; }
 nav .search input { padding-inline-end: 2.75rem; }
-nav .search input::-webkit-search-cancel-button { display: none; }  /* leert nur das Feld, ersetzt durch .clear-search */
-/* Spiegelbild der Pico-Lupe: gleicher Randabstand, gleiche Größe, gleicher Strich */
+nav .search input::-webkit-search-cancel-button { display: none; }  /* only clears the field, replaced by .clear-search */
+/* Mirror image of Pico's magnifier: same inset, same size, same stroke */
 nav .search .clear-search {
   position: absolute; top: 50%; right: .75rem; transform: translateY(-50%);
   display: grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; margin: 0;
@@ -41,7 +41,7 @@ button.link {
 .theme-toggle { font-size: 1.3rem; line-height: 1; }
 .muted { color: var(--pico-muted-color); }
 
-/* Deutlicherer Hover für Knöpfe (Pico ändert nur leicht die Farbe) */
+/* More visible hover for buttons (Pico only changes the colour slightly) */
 :is(button, [role=button]):not(.link, .star) {
   transition: background-color .15s, color .15s, box-shadow .15s, transform .15s, filter .15s;
 }
@@ -54,12 +54,12 @@ button.link {
 .isbn-group :is(button, [role=button]):hover { transform: none; box-shadow: none; }
 .narrow { max-width: 26rem; margin-inline: auto; }
 
-/* Hinweise */
+/* Flash messages */
 .flash { padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem;
          border-left: 4px solid var(--pico-primary); background: var(--pico-card-background-color); }
 .flash.error { border-left-color: #d93526; }
 
-/* Galerie */
+/* Gallery */
 .gallery-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .gallery {
   display: grid; gap: 1.5rem 1.25rem;
@@ -89,7 +89,7 @@ button.link {
 .stars { color: var(--star); }
 .caption .meta { display: flex; align-items: center; gap: .4rem; }
 
-/* Filterleiste */
+/* Filter bar */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }
 .filters [role=group] { width: auto; margin: 0; }
 .filters [role=button] { padding: .3rem .8rem; font-size: .85rem; white-space: nowrap; }
@@ -97,7 +97,7 @@ button.link {
 .filters [aria-current] .icon { color: inherit; }
 .filters .reset { font-size: .85rem; }
 
-/* Detailseite */
+/* Detail page */
 .detail { display: grid; grid-template-columns: minmax(180px, 300px) 1fr; gap: 2rem; align-items: start; }
 .detail-cover img, .detail-cover .placeholder { width: 100%; border-radius: var(--radius);
   box-shadow: 0 8px 28px rgb(0 0 0 / .25); }
@@ -119,7 +119,7 @@ button.link {
 .actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
 .actions > *, .actions button { margin: 0; width: auto; }
 
-/* Formular */
+/* Form */
 .isbn-group { margin-bottom: .25rem; }
 .isbn-group button { flex: 0 0 auto; white-space: nowrap; }
 #isbn-hint { display: block; margin: 0 0 var(--pico-spacing); }

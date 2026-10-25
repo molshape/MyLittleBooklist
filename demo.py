@@ -1,7 +1,7 @@
-"""Optionale Demo-Daten: füllt die Datenbank (DB_PATH, Standard books.db) mit Beispielnutzern und -büchern.
+"""Optional demo data: fills the database (DB_PATH, default books.db) with sample users and books.
 
-Aufruf: uv run python demo.py   (im Container: docker compose exec booklog python demo.py)
-Mehrfach ausführbar – vorhandene Nutzer und Bücher bleiben unverändert.
+Usage: uv run python demo.py   (in the container: docker compose exec booklog python demo.py)
+Safe to run repeatedly – existing users and books are left unchanged.
 """
 
 import time
@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 
 import app
 
-# Passwort = Benutzername; der Admin kommt wie immer aus ADMIN_USER/ADMIN_PASSWORD
+# Password = username; the admin comes from ADMIN_USER/ADMIN_PASSWORD as always
 DEMO_USERS = ["demo", "anna"]
 
 DEMO_BOOKS = [
@@ -44,7 +44,7 @@ DEMO_BOOKS = [
 
 
 def seed():
-    """Legt fehlende Demo-Nutzer und -Bücher an; liefert die Namen der neu angelegten Nutzer."""
+    """Creates missing demo users and books; returns the names of the newly created users."""
     db = app.db()
     created = []
     for name in DEMO_USERS:
@@ -57,7 +57,7 @@ def seed():
     for isbn, title, author, year, desc, users in DEMO_BOOKS:
         if db.execute("SELECT 1 FROM books WHERE isbn = ?", (isbn,)).fetchone():
             continue
-        # OpenLibrary Fair Use: höchstens 1 Anfrage pro Sekunde
+        # OpenLibrary fair use: at most 1 request per second
         found = app.lookup_isbn(isbn)
         time.sleep(1)
         cover, mime = app.fetch_cover(found["cover_url"] if found else None)
@@ -68,14 +68,14 @@ def seed():
         for name, (rating, is_read, is_owned) in users.items():
             db.execute("INSERT INTO user_books (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
                        (ids[name], cur.lastrowid, rating, is_read, is_owned))
-        db.commit()  # pro Buch, damit ein Abbruch den Fortschritt behält
-        print(f"  {title} ({'mit' if cover else 'ohne'} Cover)")
+        db.commit()  # per book, so an abort keeps the progress
+        print(f"  {title} ({'with' if cover else 'without'} cover)")
     db.commit()
     return created
 
 
 if __name__ == "__main__":
-    print(f"Demo-Daten für {app.DB_PATH} …")
+    print(f"Demo data for {app.DB_PATH} …")
     with app.app.app_context():
         created = seed()
-    print("Fertig. Neu angelegte Logins (Passwort = Benutzername):", ", ".join(created) or "keine")
+    print("Done. Newly created logins (password = username):", ", ".join(created) or "none")

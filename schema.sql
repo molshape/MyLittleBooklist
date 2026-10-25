@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_admin      INTEGER NOT NULL DEFAULT 0
 );
 
--- Gemeinsamer Katalog: jedes Buch existiert einmal, Beschreibung gilt für alle.
+-- Shared catalog: each book exists once, the description applies to everyone.
 CREATE TABLE IF NOT EXISTS books (
     id          INTEGER PRIMARY KEY,
     title       TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS books (
     cover_mime  TEXT
 );
 
--- Sammlung eines Users inkl. persönlicher Bewertung (1–5, NULL = keine) und Flags.
+-- A user's collection incl. personal rating (1–5, NULL = none) and flags.
 CREATE TABLE IF NOT EXISTS user_books (
     user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     book_id  INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
