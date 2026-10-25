@@ -13,7 +13,7 @@ import app
 # Password = username; the admin comes from ADMIN_USER/ADMIN_PASSWORD as always
 DEMO_USERS = ["demo", "anna"]
 
-DEMO_BOOKS = [
+DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int, int]]]] = [
     # (isbn, title, author, year, description, {user: (rating, is_read, is_owned)})
     (
         "9780547928227",
@@ -114,10 +114,10 @@ DEMO_BOOKS = [
 ]
 
 
-def seed():
+def seed() -> list[str]:
     """Creates missing demo users and books; returns the names of the newly created users."""
     db = app.db()
-    created = []
+    created: list[str] = []
     for name in DEMO_USERS:
         cur = db.execute(
             "INSERT OR IGNORE INTO users (username, password_hash) VALUES (?, ?)",

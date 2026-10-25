@@ -29,3 +29,6 @@ select = ["E4", "E7", "E9", "F", "I"]
 # These libraries ship no type information
 module = ["isbnlib", "flask_babel"]
 ignore_missing_imports = true
+
+[tool.mypy]
+strict = true

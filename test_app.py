@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 
 os.environ.update(
     DB_PATH=os.path.join(tempfile.mkdtemp(), "test.db"),
@@ -9,36 +10,38 @@ os.environ.update(
 )
 
 import pytest  # noqa: E402
+from flask.testing import FlaskClient  # noqa: E402
+from werkzeug.test import TestResponse  # noqa: E402
 
 import app as bookapp  # noqa: E402
 import demo  # noqa: E402
 
 
 @pytest.fixture
-def client():
+def client() -> FlaskClient:
     bookapp.app.config["TESTING"] = True
     return bookapp.app.test_client()
 
 
-def csrf(client):
+def csrf(client: FlaskClient) -> str:
     client.get("/login")
     with client.session_transaction() as s:
-        return s["csrf"]
+        return str(s["csrf"])
 
 
-def login(client, user, password):
+def login(client: FlaskClient, user: str, password: str) -> TestResponse:
     return client.post(
         "/login", data={"username": user, "password": password, "csrf": csrf(client)}
     )
 
 
-def post(client, url, **data):
+def post(client: FlaskClient, url: str, **data: str) -> TestResponse:
     with client.session_transaction() as s:
         data["csrf"] = s["csrf"]
     return client.post(url, data=data, follow_redirects=True)
 
 
-def test_flow(client, monkeypatch):
+def test_flow(client: FlaskClient, monkeypatch: pytest.MonkeyPatch) -> None:
     assert client.get("/").status_code == 302  # login required
     assert (
         client.post("/login", data={"username": "admin", "password": "secret"}).status_code == 400
@@ -101,7 +104,7 @@ def test_flow(client, monkeypatch):
     assert client.get("/users").status_code == 403
 
 
-def test_demo_ratios():
+def test_demo_ratios() -> None:
     # Demo: per user 80 % owned, 60 % read; ratings only for read books
     for user in demo.DEMO_USERS:
         entries = [users[user] for *_, users in demo.DEMO_BOOKS if user in users]
@@ -111,10 +114,10 @@ def test_demo_ratios():
         assert all(read for rating, read, _ in entries if rating)
 
 
-def test_demo_seed(monkeypatch):
+def test_demo_seed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(bookapp, "DB_PATH", os.path.join(tempfile.mkdtemp(), "demo.db"))
     monkeypatch.setattr(bookapp, "lookup_isbn", lambda isbn: None)  # offline, without cover
-    monkeypatch.setattr(demo.time, "sleep", lambda s: None)
+    monkeypatch.setattr(time, "sleep", lambda s: None)
     with bookapp.app.app_context():
         bookapp.init_db()
         assert demo.seed() == ["demo", "anna"]
@@ -129,14 +132,14 @@ def test_demo_seed(monkeypatch):
     assert dict(map(tuple, counts)) == {"demo": 10, "anna": 10}
 
 
-def test_normalize_isbn():
+def test_normalize_isbn() -> None:
     assert bookapp.normalize_isbn("3-499-22572-x") == "349922572X"
     assert bookapp.normalize_isbn("123") is None
     assert bookapp.format_isbn("9783499225727") == "978-3-499-22572-7"
     assert bookapp.format_isbn("349922572X") == "349922572X"  # wrong check digit stays unchanged
 
 
-def test_language_follows_browser(client):
+def test_language_follows_browser(client: FlaskClient) -> None:
     r = client.get("/login")
     assert '<html lang="en">' in r.text and "Log in" in r.text
     r = client.get("/login", headers={"Accept-Language": "de-DE,de;q=0.9,en;q=0.8"})
