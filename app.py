@@ -235,6 +235,7 @@ FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_b
 @login_required
 def gallery() -> ResponseReturnValue:
     q = request.args.get("q", "").strip()
+    catalog = request.args.get("all") == "1"  # whole shared catalog instead of own collection
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
     params = [g.user["id"], q, like, like, like, isbn_like, like]
@@ -247,7 +248,8 @@ def gallery() -> ResponseReturnValue:
         .execute(
             f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
                   ub.rating, ub.is_read, ub.is_owned
-           FROM books b JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ?
+           FROM books b {"LEFT JOIN" if catalog else "JOIN"} user_books ub
+             ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
                   OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
            ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",  # nosec B608
@@ -255,7 +257,7 @@ def gallery() -> ResponseReturnValue:
         )
         .fetchall()
     )
-    return render_template("gallery.html", books=books, q=q, filters=filters)
+    return render_template("gallery.html", books=books, q=q, filters=filters, catalog=catalog)
 
 
 @app.template_global()
@@ -265,12 +267,14 @@ def gallery_url(**changes: str) -> str:
     return url_for("gallery", **{k: v for k, v in args.items() if v})
 
 
-def owned_book(book_id: int) -> sqlite3.Row:
+def catalog_book(book_id: int) -> sqlite3.Row:
+    """Any book of the shared catalog; 'mine' tells whether it is in the user's collection."""
     book: sqlite3.Row | None = (
         db()
         .execute(
-            """SELECT b.*, ub.rating, ub.is_read, ub.is_owned FROM books b
-           JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ? WHERE b.id = ?""",
+            """SELECT b.*, ub.rating, ub.is_read, ub.is_owned, ub.user_id IS NOT NULL AS mine
+           FROM books b LEFT JOIN user_books ub ON ub.book_id = b.id AND ub.user_id = ?
+           WHERE b.id = ?""",
             (g.user["id"], book_id),
         )
         .fetchone()
@@ -280,16 +284,23 @@ def owned_book(book_id: int) -> sqlite3.Row:
     return book
 
 
+def owned_book(book_id: int) -> sqlite3.Row:
+    book = catalog_book(book_id)
+    if not book["mine"]:
+        abort(404)
+    return book
+
+
 @app.route("/book/<int:book_id>")
 @login_required
 def book_detail(book_id: int) -> ResponseReturnValue:
-    return render_template("book.html", book=owned_book(book_id))
+    return render_template("book.html", book=catalog_book(book_id))
 
 
 @app.route("/cover/<int:book_id>")
 @login_required
 def cover(book_id: int) -> ResponseReturnValue:
-    book = owned_book(book_id)
+    book = catalog_book(book_id)
     if not book["cover"]:
         abort(404)
     return book["cover"], {
@@ -322,6 +333,19 @@ def set_flag(book_id: int, name: str) -> ResponseReturnValue:
         (int(request.form.get("value") == "1"), g.user["id"], book_id),
     )
     db().commit()
+    return redirect(url_for("book_detail", book_id=book_id))
+
+
+@app.post("/book/<int:book_id>/add")
+@login_required
+def add(book_id: int) -> ResponseReturnValue:
+    catalog_book(book_id)
+    db().execute(
+        "INSERT OR IGNORE INTO user_books (user_id, book_id) VALUES (?, ?)",
+        (g.user["id"], book_id),
+    )
+    db().commit()
+    flash(_("Book added to your collection."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
 
 

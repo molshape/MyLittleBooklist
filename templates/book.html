@@ -15,6 +15,7 @@
     <h1>{{ book.title }}</h1>
     <p class="author">{{ book.author }}{% if book.year %} · {{ book.year }}{% endif %}</p>
 
+    {% if book.mine %}
     <form method="post" action="{{ url_for('rate', book_id=book.id) }}" class="rating" aria-label="{{ _('My rating') }}">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       {% for i in range(1, 6) %}
@@ -38,6 +39,7 @@
       </form>
       {% endfor %}
     </div>
+    {% endif %}
 
     {% if book.description %}<p class="description">{{ book.description }}</p>{% endif %}
 
@@ -46,12 +48,20 @@
     </dl>
 
     <div class="actions">
+      {% if book.mine %}
       <a href="{{ url_for('book_edit', book_id=book.id) }}" role="button">{{ _("Edit") }}</a>
       <form method="post" action="{{ url_for('remove', book_id=book.id) }}" class="inline"
             onsubmit="return confirm({{ _('Remove book from your collection?')|tojson|forceescape }})">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <button type="submit" class="secondary outline">{{ _("Remove from collection") }}</button>
       </form>
+      {% else %}
+      <form method="post" action="{{ url_for('add', book_id=book.id) }}" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <span class="muted">{{ _("Not in your collection.") }}</span>
+        <button type="submit">{{ _("Add to my collection") }}</button>
+      </form>
+      {% endif %}
     </div>
   </div>
 </article>
