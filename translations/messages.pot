@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: My Little Booklist VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-25 14:43+0100\n"
+"POT-Creation-Date: 2026-10-30 14:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,96 +18,100 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app.py:136
+#: app.py:147
 msgid "Invalid form token – please reload the page."
 msgstr ""
 
-#: app.py:178
+#: app.py:199
 msgid "Wrong username or password."
 msgstr ""
 
-#: app.py:194
+#: app.py:215
 msgid "Current password is wrong."
 msgstr ""
 
-#: app.py:196
+#: app.py:217
 msgid "New password must be at least 4 characters long."
 msgstr ""
 
-#: app.py:201
+#: app.py:224
 msgid "Password changed."
 msgstr ""
 
-#: app.py:296
+#: app.py:348
+msgid "Book added to your collection."
+msgstr ""
+
+#: app.py:361
 msgid "Book removed from your collection."
 msgstr ""
 
-#: app.py:320
+#: app.py:385
 msgid "ISBN must have 10 or 13 digits."
 msgstr ""
 
-#: app.py:322
+#: app.py:387
 msgid "Year of publication must be a number."
 msgstr ""
 
-#: app.py:339
+#: app.py:404
 msgid "Please enter a valid ISBN (10 or 13 digits)."
 msgstr ""
 
-#: app.py:347
+#: app.py:412
 msgid "Nothing found on OpenLibrary – please fill in manually."
 msgstr ""
 
-#: app.py:349
+#: app.py:414
 msgid "Data taken from OpenLibrary – please check and save."
 msgstr ""
 
-#: app.py:362
+#: app.py:429
 msgid "This book is already in the catalog and was added to your collection."
 msgstr ""
 
-#: app.py:378 app.py:407
+#: app.py:445 app.py:485
 msgid "Title is required."
 msgstr ""
 
-#: app.py:392
+#: app.py:470
 msgid "Book saved."
 msgstr ""
 
-#: app.py:418
+#: app.py:504
 msgid "Another book with this ISBN already exists."
 msgstr ""
 
-#: app.py:425
+#: app.py:515
 msgid "Changes saved."
 msgstr ""
 
-#: app.py:437
+#: app.py:528
 msgid "Enter a username and a password (at least 4 characters)."
 msgstr ""
 
-#: app.py:443
+#: app.py:536
 #, python-format
 msgid "User “%(name)s” created."
 msgstr ""
 
-#: app.py:445
+#: app.py:538
 msgid "Username already exists."
 msgstr ""
 
-#: app.py:458
+#: app.py:556
 msgid "You cannot delete yourself or remove your own admin rights."
 msgstr ""
 
-#: app.py:462
+#: app.py:560
 msgid "User deleted."
 msgstr ""
 
-#: app.py:468
+#: app.py:566
 msgid "Password must be at least 4 characters long."
 msgstr ""
 
-#: app.py:472
+#: app.py:572
 msgid "Password reset."
 msgstr ""
 
@@ -127,7 +131,7 @@ msgstr ""
 msgid "New password"
 msgstr ""
 
-#: templates/account.html:11 templates/book.html:37 templates/book_form.html:58
+#: templates/account.html:11 templates/book.html:38 templates/book_form.html:58
 msgid "Save"
 msgstr ""
 
@@ -160,47 +164,55 @@ msgstr ""
 msgid "Toggle light/dark mode"
 msgstr ""
 
-#: templates/base.html:61 templates/gallery.html:12
+#: templates/base.html:61 templates/gallery.html:13 templates/gallery.html:19
 msgid "My books"
 msgstr ""
 
-#: templates/book.html:9 templates/gallery.html:31
+#: templates/book.html:9 templates/gallery.html:35
 #, python-format
 msgid "Cover: %(title)s"
 msgstr ""
 
-#: templates/book.html:18 templates/book_form.html:39
+#: templates/book.html:19 templates/book_form.html:39
 msgid "My rating"
 msgstr ""
 
-#: templates/book.html:23
+#: templates/book.html:24
 msgid "Remove rating"
 msgstr ""
 
-#: templates/book.html:23
+#: templates/book.html:24
 #, python-format
 msgid "%(num)d of 5"
 msgstr ""
 
-#: templates/book.html:28 templates/book_form.html:48 templates/gallery.html:18
-#: templates/gallery.html:41
+#: templates/book.html:29 templates/book_form.html:48 templates/gallery.html:22
+#: templates/gallery.html:45
 msgid "Read"
 msgstr ""
 
-#: templates/book.html:29 templates/book_form.html:49 templates/gallery.html:42
+#: templates/book.html:30 templates/book_form.html:49 templates/gallery.html:46
 msgid "I own it"
 msgstr ""
 
-#: templates/book.html:49 templates/book_form.html:4 templates/book_form.html:5
+#: templates/book.html:52 templates/book_form.html:4 templates/book_form.html:5
 msgid "Edit"
 msgstr ""
 
-#: templates/book.html:51
+#: templates/book.html:54
 msgid "Remove book from your collection?"
 msgstr ""
 
-#: templates/book.html:53
+#: templates/book.html:56
 msgid "Remove from collection"
+msgstr ""
+
+#: templates/book.html:61
+msgid "Not in your collection."
+msgstr ""
+
+#: templates/book.html:62
+msgid "Add to my collection"
 msgstr ""
 
 #: templates/book_form.html:3 templates/book_form.html:5
@@ -270,63 +282,71 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: templates/gallery.html:12
+#: templates/gallery.html:13
 #, python-format
 msgid "Search: “%(q)s”"
 msgstr ""
 
-#: templates/gallery.html:13
+#: templates/gallery.html:13 templates/gallery.html:19
+msgid "Catalog"
+msgstr ""
+
+#: templates/gallery.html:14
 #, python-format
 msgid "%(num)d book"
 msgid_plural "%(num)d books"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/gallery.html:17
+#: templates/gallery.html:18
+msgid "Show"
+msgstr ""
+
+#: templates/gallery.html:21
 msgid "Filter read"
 msgstr ""
 
-#: templates/gallery.html:18 templates/gallery.html:21
+#: templates/gallery.html:22 templates/gallery.html:25
 msgid "All"
 msgstr ""
 
-#: templates/gallery.html:18
+#: templates/gallery.html:22
 msgid "Unread"
 msgstr ""
 
-#: templates/gallery.html:20
+#: templates/gallery.html:24
 msgid "Filter owned"
 msgstr ""
 
-#: templates/gallery.html:21
+#: templates/gallery.html:25
 msgid "Owned"
 msgstr ""
 
-#: templates/gallery.html:21
+#: templates/gallery.html:25
 msgid "Not owned"
 msgstr ""
 
-#: templates/gallery.html:23
+#: templates/gallery.html:27
 msgid "Reset filters"
 msgstr ""
 
-#: templates/gallery.html:50
+#: templates/gallery.html:54
 msgid "Nothing found."
 msgstr ""
 
-#: templates/gallery.html:50
+#: templates/gallery.html:54
 msgid "Show all books"
 msgstr ""
 
-#: templates/gallery.html:52
+#: templates/gallery.html:56
 msgid "No books yet."
 msgstr ""
 
-#: templates/gallery.html:52
+#: templates/gallery.html:56
 msgid "Add your first book"
 msgstr ""
 
-#: templates/gallery.html:52
+#: templates/gallery.html:56
 msgid "fastest by ISBN."
 msgstr ""
 

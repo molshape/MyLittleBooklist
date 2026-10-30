@@ -100,7 +100,15 @@ def test_flow(client: FlaskClient, monkeypatch: pytest.MonkeyPatch) -> None:
     with client.session_transaction() as s:
         assert s["csrf"] != old_token
     assert "Der Zauberberg" not in client.get("/").text
-    assert client.get("/book/1").status_code == 404
+    # ...but finds it in the shared catalog, can view it, but not rate or edit it
+    assert "Der Zauberberg" in client.get("/?all=1").text
+    assert "Add to my collection" in client.get("/book/1").text
+    with client.session_transaction() as s:
+        assert client.post("/book/1/rate", data={"csrf": s["csrf"]}).status_code == 404
+    assert client.get("/book/1/edit").status_code == 404
+    post(client, "/book/1/add")
+    assert "Der Zauberberg" in client.get("/").text
+    assert client.get("/book/99").status_code == 404
     assert client.get("/users").status_code == 403
 
 
