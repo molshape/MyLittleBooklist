@@ -86,6 +86,15 @@ babel.cfg       extraction config for pybabel
 test_app.py     tests
 ```
 
+### Changing the database schema
+
+Existing databases are updated automatically on start. For a schema change:
+
+1. Append the SQL to `MIGRATIONS` in `app.py` (one entry per step, never edit or reorder existing entries).
+2. Make the same change in `schema.sql`, so new databases start in the final state.
+
+Before migrating, the app saves a backup next to the database (`books.db.v<version>.bak`). Each step runs in its own transaction: if one fails, it is rolled back and the app does not start. An older app version refuses to start on a database that was already migrated by a newer one. To go back, restore the backup.
+
 ### Translating
 
 UI texts are written in English and marked with `_("…")` in `app.py` and the templates. The language is picked from the browser's `Accept-Language` header; English is the fallback. Every language folder in `translations/` is picked up automatically – no code change needed.
