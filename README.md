@@ -1,4 +1,4 @@
-# 📚 My Little Booklist
+# <img src="src/mylittlebooklist/static/logo.svg" alt="" height="48"> My Little Booklist
 
 [![CI](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml/badge.svg)](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml)
 
@@ -62,10 +62,44 @@ docker compose cp booklog:/data/books.db ./books-backup.db
 
 Requires Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/).
 
+### Running locally
+
+Set up once:
+
 ```sh
 uv sync
 uv run pybabel compile -d src/mylittlebooklist/translations   # builds the .mo files
-ADMIN_PASSWORD=admin uv run flask --app mylittlebooklist.app run --debug   # creates books.db
+```
+
+Then start the app from the repository root. Run all commands in the same terminal, so they use the same settings and database.
+
+Bash:
+
+```sh
+export ADMIN_PASSWORD=admin
+export DB_PATH=books.db                                # optional, this is the default
+uv run python -m mylittlebooklist.demo                 # optional, adds demo data
+uv run flask --app mylittlebooklist.app run --debug
+```
+
+PowerShell:
+
+```powershell
+$env:ADMIN_PASSWORD = "admin"
+$env:DB_PATH = "books.db"                              # optional, this is the default
+uv run python -m mylittlebooklist.demo                 # optional, adds demo data
+uv run flask --app mylittlebooklist.app run --debug
+```
+
+Open http://127.0.0.1:5000 and log in as `admin` with the password you set.
+
+- A relative `DB_PATH` is resolved against the current directory. If you start from another folder, the app creates a new, empty database there. Use a different file name, such as `demo.db`, to keep test data separate from your library.
+- `ADMIN_PASSWORD` is only used when the database is created. Without it, the app generates a password and prints it to the log once.
+- A local start does not read `.env`, which is only used by Docker. Set the variables in the terminal as shown above.
+
+### Checks
+
+```sh
 uv run pytest
 uv run ruff check . && uv run ruff format --check .       # lint and formatting
 uv run mypy .                                             # type check
@@ -123,7 +157,7 @@ docker compose exec booklog python -m mylittlebooklist.demo     # inside the run
 
 - Takes about a minute and needs internet access: book data and covers come from Open Library, at most one request per second in line with their fair-use rules.
 - Safe to run repeatedly: existing users and books are left unchanged.
-- The admin account still comes from `ADMIN_USER` / `ADMIN_PASSWORD`.
+- The admin account still comes from `ADMIN_USER` / `ADMIN_PASSWORD`. Set them before the first run: on a new database, the loader already creates the admin (see [Running locally](#running-locally)).
 - The demo books are defined in `DEMO_BOOKS` in `src/mylittlebooklist/demo.py`.
 
 ## Contributing
