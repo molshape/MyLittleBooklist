@@ -76,7 +76,7 @@ The database is migrated automatically on start. Before migrating, the app saves
 
 ## Demo data (optional)
 
-To try the app with sample content, add two users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned and 6 read:
+To try the app with sample content, add two users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned, 6 read and 8 in categories:
 
 ```sh
 docker compose exec my-little-booklist python -m mylittlebooklist.demo

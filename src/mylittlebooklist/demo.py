@@ -2,7 +2,8 @@
 
 Usage: uv run python -m mylittlebooklist.demo
 (in the container: docker compose exec my-little-booklist python -m mylittlebooklist.demo)
-Safe to run repeatedly – existing users and books are left unchanged.
+Safe to run repeatedly – existing users and books are left unchanged, only missing demo
+categories are added.
 """
 
 import time
@@ -15,15 +16,17 @@ from mylittlebooklist.app import app
 # Password = username; the admin comes from ADMIN_USER/ADMIN_PASSWORD as always
 DEMO_USERS = ["demo", "anna"]
 
-DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int, int]]]] = [
-    # (isbn, title, author, year, description, {user: (rating, is_read, is_owned)})
+DEMO_BOOKS: list[
+    tuple[str, str, str, int, str, dict[str, tuple[int | None, int, int, tuple[str, ...]]]]
+] = [
+    # (isbn, title, author, year, description, {user: (rating, is_read, is_owned, categories)})
     (
         "9780547928227",
         "The Hobbit",
         "J. R. R. Tolkien",
         1937,
         "Bilbo Beutlin wird von Gandalf und dreizehn Zwergen auf eine Reise zum Einsamen Berg mitgenommen.",
-        {"demo": (5, 1, 1), "anna": (4, 1, 0)},
+        {"demo": (5, 1, 1, ("Fantasy", "Klassiker")), "anna": (4, 1, 0, ("Fantasy", "Klassiker"))},
     ),
     (
         "9780261103573",
@@ -31,7 +34,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "J. R. R. Tolkien",
         1954,
         "Erster Teil des Herrn der Ringe: Frodo bricht auf, um den Einen Ring zu vernichten.",
-        {"demo": (5, 1, 1), "anna": (None, 0, 1)},
+        {"demo": (5, 1, 1, ("Fantasy", "Klassiker")), "anna": (None, 0, 1, ("Fantasy",))},
     ),
     (
         "9780451524935",
@@ -39,7 +42,10 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "George Orwell",
         1949,
         "Dystopie über Überwachung, Gedankenkontrolle und den Großen Bruder.",
-        {"demo": (4, 1, 1), "anna": (5, 1, 1)},
+        {
+            "demo": (4, 1, 1, ("Science Fiction", "Klassiker")),
+            "anna": (5, 1, 1, ("Science Fiction", "Klassiker")),
+        },
     ),
     (
         "9780441172719",
@@ -47,7 +53,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Frank Herbert",
         1965,
         "Wüstenplanet Arrakis, das Spice und der Aufstieg von Paul Atreides.",
-        {"demo": (None, 0, 1), "anna": (None, 0, 1)},
+        {"demo": (None, 0, 1, ("Science Fiction",)), "anna": (None, 0, 1, ())},
     ),
     (
         "9780345391803",
@@ -55,7 +61,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Douglas Adams",
         1979,
         "Kurz bevor die Erde gesprengt wird, trampt Arthur Dent ins All. Don't panic!",
-        {"demo": (4, 1, 0), "anna": (5, 1, 1)},
+        {"demo": (4, 1, 0, ("Science Fiction",)), "anna": (5, 1, 1, ("Science Fiction",))},
     ),
     (
         "9780743273565",
@@ -63,7 +69,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "F. Scott Fitzgerald",
         1925,
         "Jay Gatsby, Daisy Buchanan und der amerikanische Traum in den Roaring Twenties.",
-        {"demo": (None, 0, 0), "anna": (3, 1, 1)},
+        {"demo": (None, 0, 0, ("Klassiker",)), "anna": (3, 1, 1, ("Klassiker",))},
     ),
     (
         "9780141439518",
@@ -71,7 +77,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Jane Austen",
         1813,
         "Elizabeth Bennet und Mr. Darcy – Stolz und Vorurteil.",
-        {"anna": (5, 1, 1)},
+        {"anna": (5, 1, 1, ("Klassiker",))},
     ),
     (
         "9780061120084",
@@ -79,7 +85,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Harper Lee",
         1960,
         "Scout Finch erlebt, wie ihr Vater einen zu Unrecht angeklagten Schwarzen verteidigt.",
-        {"demo": (4, 1, 1), "anna": (4, 1, 1)},
+        {"demo": (4, 1, 1, ("Klassiker",)), "anna": (4, 1, 1, ("Klassiker",))},
     ),
     (
         "9780553380163",
@@ -87,7 +93,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Stephen Hawking",
         1988,
         "Vom Urknall bis zu Schwarzen Löchern – Kosmologie für alle.",
-        {"demo": (None, 0, 1)},
+        {"demo": (None, 0, 1, ())},
     ),
     (
         "9780316769488",
@@ -95,7 +101,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "J. D. Salinger",
         1951,
         "Holden Caulfield irrt drei Tage durch New York.",
-        {"demo": (3, 1, 1)},
+        {"demo": (3, 1, 1, ())},
     ),
     (
         "9780140449136",
@@ -103,7 +109,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "Fjodor Dostojewski",
         1866,
         "Raskolnikow begeht einen Mord und ringt mit Schuld und Gewissen.",
-        {"anna": (None, 0, 1)},
+        {"anna": (None, 0, 1, ("Klassiker",))},
     ),
     (
         "9780439708180",
@@ -111,7 +117,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
         "J. K. Rowling",
         1997,
         "Harry erfährt an seinem elften Geburtstag, dass er ein Zauberer ist.",
-        {"demo": (None, 0, 1), "anna": (None, 0, 0)},
+        {"demo": (None, 0, 1, ("Fantasy",)), "anna": (None, 0, 0, ())},
     ),
 ]
 
@@ -143,13 +149,23 @@ def seed() -> list[str]:
             "INSERT INTO books (title, author, year, isbn, description, cover, cover_mime) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (title, author, year, isbn, desc, cover, mime),
         )
-        for name, (rating, is_read, is_owned) in users.items():
+        for name, (rating, is_read, is_owned, _) in users.items():
             db.execute(
                 "INSERT INTO user_books (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
                 (ids[name], cur.lastrowid, rating, is_read, is_owned),
             )
         db.commit()  # per book, so an abort keeps the progress
         print(f"  {title} ({'with' if cover else 'without'} cover)")
+    # Also for books of an earlier run; a book removed from the collection stays removed
+    for isbn, *_, users in DEMO_BOOKS:
+        for name, (*_, categories) in users.items():
+            for category in categories:
+                db.execute(
+                    """INSERT OR IGNORE INTO user_book_categories (user_id, book_id, category)
+                       SELECT ub.user_id, ub.book_id, ? FROM user_books ub
+                       JOIN books b ON b.id = ub.book_id WHERE ub.user_id = ? AND b.isbn = ?""",
+                    (category, ids[name], isbn),
+                )
     db.commit()
     return created
 
