@@ -122,3 +122,48 @@ def test_stored_svg_cover_is_not_served(client: FlaskClient) -> None:
         database.db().execute("UPDATE books SET cover_mime = 'image/svg+xml'")
         database.db().commit()
     assert client.get("/cover/1").status_code == 404
+
+
+def add_categorized(client: FlaskClient, title: str, *categories: str, **fields: str) -> None:
+    with client.session_transaction() as s:
+        data = {"csrf": s["csrf"], "title": title, "action": "save", **fields}
+    client.post("/book/new", data={**data, "category": list(categories)})
+
+
+def test_new_category_survives_form_error(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    r = post(client, "/book/new", title="", action="save", new_category="Neu")
+    assert 'name="category" value="Neu"' in r.text
+
+
+def test_categories_are_personal(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Buch", "Geheim")
+    post(client, "/users", username="bob", password="bobpw")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    assert "Geheim" not in client.get("/?all=1").text
+    assert "Geheim" not in client.get("/book/1").text
+    assert "Geheim" not in client.get("/book/new").text
+
+
+def test_existing_isbn_only_categorizes_new_collection_entry(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    isbn = "9783596906142"
+    add_categorized(client, "Buch", "Erste", isbn=isbn)
+    add_categorized(client, "Buch", "Zweite", isbn=isbn)  # already in the collection: unchanged
+    assert "Zweite" not in client.get("/book/1").text
+    post(client, "/users", username="bob", password="bobpw")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    add_categorized(client, "Buch", "Bobs", isbn=isbn)
+    assert "Bobs" in client.get("/book/1").text
+
+
+def test_removing_book_removes_its_categories(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Buch", "Krimi")
+    post(client, "/book/1/remove")
+    with app.app_context():
+        count = database.db().execute("SELECT COUNT(*) FROM user_book_categories").fetchone()[0]
+    assert count == 0

@@ -127,6 +127,37 @@ button.link {
 .form-cover input[type=file] { font-size: .8rem; }
 .form-cover img, .form-cover .placeholder { margin-bottom: 1rem; }
 .form-cover img { width: 100%; border-radius: var(--radius); }
+.tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; padding: .35rem .5rem;
+  margin-bottom: var(--pico-spacing); border-radius: var(--pico-border-radius);
+  border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+  background: var(--pico-form-element-background-color);
+}
+.tags:focus-within { border-color: var(--pico-primary); }
+.tag {
+  display: inline-flex; align-items: center; gap: .35rem; padding: .1rem .6rem;
+  border-radius: 1rem; font-size: .9rem; background: var(--pico-secondary-background);
+  color: var(--pico-secondary-inverse);
+}
+.tag button { color: inherit; line-height: 1; }
+/* The id outweighs Pico's input rules, the visible frame is on .tags */
+#category-input {
+  flex: 1 1 8rem; width: auto; height: auto; margin: 0; padding: .2rem;
+  border: 0; background: none; box-shadow: none;
+}
+.tags { position: relative; }
+#category-options {
+  position: absolute; inset-inline: 0; top: calc(100% + .25rem); z-index: 10;
+  max-height: 14rem; overflow-y: auto; margin: 0; padding: .25rem;
+  border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+  border-radius: var(--pico-border-radius); background: var(--pico-card-background-color);
+  box-shadow: 0 4px 14px rgb(0 0 0 / .18);
+}
+#category-options li {
+  list-style: none; margin: 0; padding: .35rem .6rem; cursor: pointer;
+  border-radius: var(--pico-border-radius);
+}
+#category-options li:hover, #category-options li[aria-selected=true] { background: var(--pico-primary-focus); }
 
 @media (max-width: 640px) {
   .detail, .form-grid { grid-template-columns: 1fr; }

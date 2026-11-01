@@ -2,7 +2,8 @@
 
 import re
 import sqlite3
-from typing import Any
+import unicodedata
+from typing import Any, cast
 
 from flask import abort, flash, g, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
@@ -52,6 +53,42 @@ def gallery_url(**changes: str) -> str:
     return url_for("gallery", **{k: v for k, v in args.items() if v})
 
 
+def alpha(text: str) -> str:
+    """Sort key ignoring case and accents; SQLite's NOCASE is ASCII-only and puts 'Ärger' after 'Z'."""
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold()
+
+
+@app.template_global()
+def user_categories() -> list[str]:
+    rows = db().execute(
+        "SELECT DISTINCT category FROM user_book_categories WHERE user_id = ?", (g.user["id"],)
+    )
+    return sorted((row["category"] for row in rows), key=alpha)
+
+
+def book_categories(book_id: int) -> list[str]:
+    rows = db().execute(
+        "SELECT category FROM user_book_categories WHERE user_id = ? AND book_id = ?",
+        (g.user["id"], book_id),
+    )
+    return sorted((row["category"] for row in rows), key=alpha)
+
+
+def set_categories(book_id: int, names: list[str]) -> None:
+    # Reuse the existing spelling, so 'krimi' doesn't open a second shelf next to 'Krimi'
+    existing = {name.casefold(): name for name in user_categories()}
+    chosen = {name.casefold(): existing.get(name.casefold(), name) for name in names}
+    db().execute(
+        "DELETE FROM user_book_categories WHERE user_id = ? AND book_id = ?",
+        (g.user["id"], book_id),
+    )
+    db().executemany(
+        "INSERT INTO user_book_categories (user_id, book_id, category) VALUES (?, ?, ?)",
+        [(g.user["id"], book_id, name) for name in chosen.values()],
+    )
+
+
 def catalog_book(book_id: int) -> sqlite3.Row:
     """Any book of the shared catalog; 'mine' tells whether it is in the user's collection."""
     book: sqlite3.Row | None = (
@@ -79,7 +116,9 @@ def owned_book(book_id: int) -> sqlite3.Row:
 @app.route("/book/<int:book_id>")
 @login_required
 def book_detail(book_id: int) -> ResponseReturnValue:
-    return render_template("book.html", book=catalog_book(book_id))
+    return render_template(
+        "book.html", book=catalog_book(book_id), categories=book_categories(book_id)
+    )
 
 
 @app.route("/cover/<int:book_id>")
@@ -166,6 +205,11 @@ def read_form() -> tuple[dict[str, Any], list[str]]:
         "is_read": int("is_read" in f),
         "is_owned": int("is_owned" in f),
         "cover_url": f.get("cover_url", ""),
+        "categories": [
+            name
+            for raw in [*f.getlist("category"), *f.get("new_category", "").split(",")]
+            if (name := raw.strip())
+        ],
     }
     errors = []
     if data["isbn"] and not openlibrary.normalize_isbn(data["isbn"]):
@@ -202,12 +246,14 @@ def do_lookup(data: dict[str, Any], book_id: int | None = None) -> dict[str, Any
     return {**data, **{k: v or "" for k, v in found.items()}, "isbn": isbn}
 
 
-def insert_user_book(book_id: int | None, data: dict[str, Any], ignore: bool = False) -> None:
-    db().execute(
+def insert_user_book(book_id: int, data: dict[str, Any], ignore: bool = False) -> None:
+    cur = db().execute(
         f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"  # nosec B608
         " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
         (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]),
     )
+    if cur.rowcount:  # a book that is already in the collection keeps its categories
+        set_categories(book_id, data["categories"])
 
 
 def add_to_collection(book_id: int, data: dict[str, Any]) -> ResponseReturnValue:
@@ -252,10 +298,11 @@ def book_new() -> ResponseReturnValue:
             mime,
         ),
     )
-    insert_user_book(cur.lastrowid, data)
+    book_id = cast(int, cur.lastrowid)
+    insert_user_book(book_id, data)
     db().commit()
     flash(_("Book saved."), "ok")
-    return redirect(url_for("book_detail", book_id=cur.lastrowid))
+    return redirect(url_for("book_detail", book_id=book_id))
 
 
 @app.route("/book/<int:book_id>/edit", methods=["GET", "POST"])
@@ -263,7 +310,10 @@ def book_new() -> ResponseReturnValue:
 def book_edit(book_id: int) -> ResponseReturnValue:
     book = owned_book(book_id)
     if request.method == "GET":
-        return render_template("book_form.html", book=book, new=False)
+        categories = book_categories(book_id)
+        return render_template(
+            "book_form.html", book={**dict(book), "categories": categories}, new=False
+        )
     data, errors = read_form()
     data["id"], data["cover"] = book_id, book["cover"]
     if request.form.get("action") == "lookup":
@@ -298,6 +348,7 @@ def book_edit(book_id: int) -> ResponseReturnValue:
         "UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
         (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id),
     )
+    set_categories(book_id, data["categories"])
     db().commit()
     flash(_("Changes saved."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
