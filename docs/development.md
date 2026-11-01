@@ -104,7 +104,7 @@ Before migrating, the app saves a backup next to the database (`books.db.v<versi
 UI texts are written in English and marked with `_("…")` in the Python modules and the templates. The language is picked from the browser's `Accept-Language` header; English is the fallback. Every language folder in `src/mylittlebooklist/translations/` is picked up automatically – no code change needed.
 
 ```sh
-uv run pybabel extract -F babel.cfg --project="My Little Booklist" -o src/mylittlebooklist/translations/messages.pot src/mylittlebooklist   # after changing texts
+uv run pybabel extract -F babel.cfg --add-location=file --project="My Little Booklist" -o src/mylittlebooklist/translations/messages.pot src/mylittlebooklist   # after changing texts
 uv run pybabel update -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations       # merge new texts into all languages
 uv run pybabel init -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations -l eo   # new language, e.g. eo = Esperanto
 uv run pybabel compile -d src/mylittlebooklist/translations   # build the .mo files
