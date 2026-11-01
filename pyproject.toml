@@ -9,6 +9,10 @@ dependencies = [
     "isbnlib>=3.10.14",
 ]
 
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13"]
+build-backend = "uv_build"
+
 [dependency-groups]
 dev = [
     "bandit>=1.9.4",
@@ -17,6 +21,9 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.17.2",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100

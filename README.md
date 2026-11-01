@@ -64,63 +64,67 @@ Requires Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync
-uv run pybabel compile -d translations                    # builds the .mo files
-ADMIN_PASSWORD=admin uv run flask --app app run --debug   # creates books.db
+uv run pybabel compile -d src/mylittlebooklist/translations   # builds the .mo files
+ADMIN_PASSWORD=admin uv run flask --app mylittlebooklist.app run --debug   # creates books.db
 uv run pytest
 uv run ruff check . && uv run ruff format --check .       # lint and formatting
 uv run mypy .                                             # type check
-uv run bandit -r app.py demo.py                           # security scan
+uv run bandit -r src                                      # security scan
 uv run pip-audit                                          # known vulnerabilities in dependencies
 ```
 
 ### Project layout
 
 ```text
-app.py          Flask app: routes, auth, Open Library lookup
-schema.sql      database schema (created automatically on start)
-demo.py         optional demo data loader
-templates/      Jinja templates
-static/         CSS and logo
-translations/   translation template (messages.pot) and catalogs per language (messages.po)
-babel.cfg       extraction config for pybabel
-test_app.py     tests
+src/mylittlebooklist/
+  app.py          Flask app and its configuration, loads the routes, sets up the database
+  database.py     SQLite connection, schema setup and migrations
+  openlibrary.py  ISBN helpers and Open Library lookup
+  demo.py         optional demo data loader
+  schema.sql      database schema (created automatically on start)
+  routes/         auth.py (login, CSRF, account), books.py (gallery, collection), users.py (admin)
+  templates/      Jinja templates
+  static/         CSS and logo
+  translations/   translation template (messages.pot) and catalogs per language (messages.po)
+tests/            tests, one file per topic
+babel.cfg         extraction config for pybabel
 ```
 
 ### Changing the database schema
 
 Existing databases are updated automatically on start. For a schema change:
 
-1. Append the SQL to `MIGRATIONS` in `app.py` (one entry per step, never edit or reorder existing entries).
-2. Make the same change in `schema.sql`, so new databases start in the final state.
+1. Append the SQL to `MIGRATIONS` in `src/mylittlebooklist/database.py` (one entry per step, never edit or reorder existing entries).
+2. Make the same change in `src/mylittlebooklist/schema.sql`, so new databases start in the final state.
 
 Before migrating, the app saves a backup next to the database (`books.db.v<version>.bak`). Each step runs in its own transaction: if one fails, it is rolled back and the app does not start. An older app version refuses to start on a database that was already migrated by a newer one. To go back, restore the backup.
 
 ### Translating
 
-UI texts are written in English and marked with `_("…")` in `app.py` and the templates. The language is picked from the browser's `Accept-Language` header; English is the fallback. Every language folder in `translations/` is picked up automatically – no code change needed.
+UI texts are written in English and marked with `_("…")` in the Python modules and the templates. The language is picked from the browser's `Accept-Language` header; English is the fallback. Every language folder in `src/mylittlebooklist/translations/` is picked up automatically – no code change needed.
 
 ```sh
-uv run pybabel extract -F babel.cfg --project="My Little Booklist" -o translations/messages.pot .   # after changing texts
-uv run pybabel update -i translations/messages.pot -d translations       # merge new texts into all languages
-uv run pybabel init -i translations/messages.pot -d translations -l eo   # new language, e.g. eo = Esperanto
-uv run pybabel compile -d translations                                   # build the .mo files
+uv run pybabel extract -F babel.cfg --project="My Little Booklist" -o src/mylittlebooklist/translations/messages.pot src/mylittlebooklist   # after changing texts
+uv run pybabel update -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations       # merge new texts into all languages
+uv run pybabel init -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations -l eo   # new language, e.g. eo = Esperanto
+uv run pybabel compile -d src/mylittlebooklist/translations   # build the .mo files
 ```
 
-Then translate the entries in `translations/<lang>/LC_MESSAGES/messages.po`. The compiled `.mo` files are not committed. They are compiled by Docker build.
+Then translate the entries in `src/mylittlebooklist/translations/<lang>/LC_MESSAGES/messages.po`. The compiled `.mo` files are not committed. They are compiled by Docker build.
 
 ## Demo data (optional)
 
-`demo.py` fills a database with two sample users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned and 6 read:
+`mylittlebooklist.demo` fills a database with two sample users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned and 6 read:
 
 ```sh
-uv run python demo.py                          # locally (uses DB_PATH, default books.db)
-docker compose exec booklog python demo.py     # inside the running container
+uv run python -m mylittlebooklist.demo                          # locally (uses DB_PATH, default books.db)
+docker compose exec booklog python -m mylittlebooklist.demo     # inside the running container
 ```
 
 - Takes about a minute and needs internet access: book data and covers come from Open Library, at most one request per second in line with their fair-use rules.
 - Safe to run repeatedly: existing users and books are left unchanged.
 - The admin account still comes from `ADMIN_USER` / `ADMIN_PASSWORD`.
-- The demo books are defined in `DEMO_BOOKS` in `demo.py`.
+- The demo books are defined in `DEMO_BOOKS` in `src/mylittlebooklist/demo.py`.
 
 ## Contributing
 

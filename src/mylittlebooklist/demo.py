@@ -1,6 +1,7 @@
 """Optional demo data: fills the database (DB_PATH, default books.db) with sample users and books.
 
-Usage: uv run python demo.py   (in the container: docker compose exec booklog python demo.py)
+Usage: uv run python -m mylittlebooklist.demo
+(in the container: docker compose exec booklog python -m mylittlebooklist.demo)
 Safe to run repeatedly – existing users and books are left unchanged.
 """
 
@@ -8,7 +9,8 @@ import time
 
 from werkzeug.security import generate_password_hash
 
-import app
+from mylittlebooklist import database, openlibrary
+from mylittlebooklist.app import app
 
 # Password = username; the admin comes from ADMIN_USER/ADMIN_PASSWORD as always
 DEMO_USERS = ["demo", "anna"]
@@ -116,7 +118,7 @@ DEMO_BOOKS: list[tuple[str, str, str, int, str, dict[str, tuple[int | None, int,
 
 def seed() -> list[str]:
     """Creates missing demo users and books; returns the names of the newly created users."""
-    db = app.db()
+    db = database.db()
     created: list[str] = []
     for name in DEMO_USERS:
         cur = db.execute(
@@ -133,9 +135,9 @@ def seed() -> list[str]:
         if db.execute("SELECT 1 FROM books WHERE isbn = ?", (isbn,)).fetchone():
             continue
         # OpenLibrary fair use: at most 1 request per second
-        found = app.lookup_isbn(isbn)
+        found = openlibrary.lookup_isbn(isbn)
         time.sleep(1)
-        cover, mime = app.fetch_cover(found["cover_url"] if found else None)
+        cover, mime = openlibrary.fetch_cover(found["cover_url"] if found else None)
         time.sleep(1)
         cur = db.execute(
             "INSERT INTO books (title, author, year, isbn, description, cover, cover_mime) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -153,7 +155,7 @@ def seed() -> list[str]:
 
 
 if __name__ == "__main__":
-    print(f"Demo data for {app.DB_PATH} …")
-    with app.app.app_context():
+    print(f"Demo data for {database.DB_PATH} …")
+    with app.app_context():
         created = seed()
     print("Done. Newly created logins (password = username):", ", ".join(created) or "none")

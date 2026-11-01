@@ -4,7 +4,7 @@ Thanks for your interest in **My Little Booklist**! Contributions are welcome �
 
 ## Keeping it simple
 
-**My Little Booklist** is intentionally small and simple: one Flask file, SQLite, server-rendered templates and no JavaScript framework. It should stay easy to run and simple to understand. New features are weighed against that – a smaller change that covers most of the need is usually preferred over a complete one that adds a lot of code or new dependencies.
+**My Little Booklist** is intentionally small and simple: a few plain Python modules, SQLite, server-rendered templates and no JavaScript framework. It should stay easy to run and simple to understand. New features are weighed against that – a smaller change that covers most of the need is usually preferred over a complete one that adds a lot of code or new dependencies.
 
 ## Welcome contributions
 
@@ -19,7 +19,7 @@ For larger changes or new features, please open an issue first so we can discuss
 
 Follow the steps in the [Translating](README.md#translating) section of the [README.md](README.md):
 1. create the catalog with `pybabel init`
-2. translate `translations/<lang>/LC_MESSAGES/messages.po` using [`messages.pot`](translations/messages.pot) as a template
+2. translate `src/mylittlebooklist/translations/<lang>/LC_MESSAGES/messages.po` using [`messages.pot`](src/mylittlebooklist/translations/messages.pot) as a template
 3. and submit the `.po` file. (The compiled `.mo` files are not committed.)
 
 Corrections to existing translations are just as welcome.
@@ -30,5 +30,5 @@ Corrections to existing translations are just as welcome.
 - Match the style of the surrounding code.
 - Mark new UI texts with `_("…")` and update the catalogs (`pybabel extract` and `pybabel update`).
 - Run the tests with `uv run pytest` and add a test for new logic.
-- Run `uv run ruff check .`, `uv run ruff format .`, `uv run mypy .`, `uv run bandit -r app.py demo.py` and `uv run pip-audit` – all must pass.
+- Run `uv run ruff check .`, `uv run ruff format .`, `uv run mypy .`, `uv run bandit -r src` and `uv run pip-audit` – all must pass.
 - Describe in the pull request what changed and why.
