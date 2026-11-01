@@ -86,11 +86,13 @@ def book_detail(book_id: int) -> ResponseReturnValue:
 @login_required
 def cover(book_id: int) -> ResponseReturnValue:
     book = catalog_book(book_id)
-    if not book["cover"]:
+    # Covers stored before COVER_MIMES existed may have any type
+    if not book["cover"] or book["cover_mime"] not in openlibrary.COVER_MIMES:
         abort(404)
     return book["cover"], {
         "Content-Type": book["cover_mime"],
         "Cache-Control": "private, max-age=3600",
+        "X-Content-Type-Options": "nosniff",
     }
 
 
@@ -177,7 +179,7 @@ def form_cover(data: dict[str, Any]) -> tuple[bytes | None, str | None]:
     """Cover from the upload or (after an ISBN lookup) from OpenLibrary; (None, None) if there is none."""
     upload = request.files.get("cover")
     if upload and upload.filename:
-        if not (upload.mimetype or "").startswith("image/"):
+        if upload.mimetype not in openlibrary.COVER_MIMES:
             return None, None
         return upload.read(), upload.mimetype
     return openlibrary.fetch_cover(data["cover_url"])

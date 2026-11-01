@@ -1,8 +1,11 @@
+import io
+
 import pytest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from mylittlebooklist import openlibrary
+from mylittlebooklist import database, openlibrary
+from mylittlebooklist.app import app
 from tests.helpers import login, post
 
 
@@ -83,3 +86,39 @@ def test_shared_catalog(client: FlaskClient) -> None:
 def test_unknown_book(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     assert client.get("/book/99").status_code == 404
+
+
+def upload_cover(client: FlaskClient, filename: str, mime: str) -> None:
+    with client.session_transaction() as s:
+        data = {
+            "csrf": s["csrf"],
+            "title": "Mit Cover",
+            "action": "save",
+            "cover": (io.BytesIO(b"<svg onload='alert(1)'/>"), filename, mime),
+        }
+    client.post("/book/new", data=data, content_type="multipart/form-data")
+
+
+def test_svg_upload_is_not_stored(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    upload_cover(client, "evil.svg", "image/svg+xml")
+    with app.app_context():
+        assert database.db().execute("SELECT cover FROM books").fetchone()["cover"] is None
+    assert client.get("/cover/1").status_code == 404
+
+
+def test_png_cover_is_served_without_sniffing(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    upload_cover(client, "cover.png", "image/png")
+    r = client.get("/cover/1")
+    assert r.status_code == 200 and r.content_type == "image/png"
+    assert r.headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_stored_svg_cover_is_not_served(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    upload_cover(client, "cover.png", "image/png")
+    with app.app_context():
+        database.db().execute("UPDATE books SET cover_mime = 'image/svg+xml'")
+        database.db().commit()
+    assert client.get("/cover/1").status_code == 404

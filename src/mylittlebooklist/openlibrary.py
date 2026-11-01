@@ -10,6 +10,8 @@ import isbnlib
 
 USER_AGENT = {"User-Agent": "MyLittleBooklist/0.1 (private home library)"}
 COVER_PREFIX = "https://covers.openlibrary.org/"
+# Never SVG or similar: covers are served from our origin, where scripts in them would run
+COVER_MIMES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 
 def normalize_isbn(raw: str | None) -> str | None:
@@ -52,6 +54,6 @@ def fetch_cover(url: str | None) -> tuple[bytes | None, str | None]:
     try:
         with urlopen(Request(url, headers=USER_AGENT), timeout=15) as resp:  # nosec B310
             mime = resp.headers.get_content_type()
-            return (resp.read(), mime) if mime.startswith("image/") else (None, None)
+            return (resp.read(), mime) if mime in COVER_MIMES else (None, None)
     except (URLError, TimeoutError):
         return None, None
