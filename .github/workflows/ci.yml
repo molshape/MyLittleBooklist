@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     tags: ["v*"]
   pull_request:
 
@@ -16,9 +16,9 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy .
-      - run: uv run bandit -r app.py demo.py
+      - run: uv run bandit -r src
       - run: uv run pip-audit
-      - run: uv run pybabel compile -d translations
+      - run: uv run pybabel compile -d src/mylittlebooklist/translations
       - run: uv run pytest
 
   docker:
@@ -45,6 +45,6 @@ jobs:
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
       - uses: docker/build-push-action@v7
         with:
-          push: true
+          push: ${{ github.ref != 'refs/heads/dev' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

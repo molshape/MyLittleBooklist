@@ -6,16 +6,14 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY app.py schema.sql demo.py ./
-COPY templates templates
-COPY static static
-COPY translations translations
+COPY src src
+RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
-RUN pybabel compile -d translations
+RUN pybabel compile -d src/mylittlebooklist/translations
 
 ENV DB_PATH=/data/books.db
 VOLUME /data
 EXPOSE 8000
 # --preload: DB init runs once before the workers are forked
-CMD ["gunicorn", "--preload", "--workers", "2", "--threads", "4", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "--preload", "--workers", "2", "--threads", "4", "--bind", "0.0.0.0:8000", "mylittlebooklist.app:app"]

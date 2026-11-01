@@ -1,0 +1,450 @@
+# Translations template for My Little Booklist.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the My Little Booklist
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: My Little Booklist VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-11-01 14:15+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: src/mylittlebooklist/routes/auth.py
+msgid "Invalid form token – please reload the page."
+msgstr ""
+
+#: src/mylittlebooklist/routes/auth.py
+msgid "Wrong username or password."
+msgstr ""
+
+#: src/mylittlebooklist/routes/auth.py
+msgid "Current password is wrong."
+msgstr ""
+
+#: src/mylittlebooklist/routes/auth.py
+msgid "New password must be at least 4 characters long."
+msgstr ""
+
+#: src/mylittlebooklist/routes/auth.py
+msgid "Password changed."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Book added to your collection."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Book removed from your collection."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "ISBN must have 10 or 13 digits."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Year of publication must be a number."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Please enter a valid ISBN (10 or 13 digits)."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Nothing found on OpenLibrary – please fill in manually."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Data taken from OpenLibrary – please check and save."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "This book is already in the catalog and was added to your collection."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Title is required."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Book saved."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Another book with this ISBN already exists."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "Changes saved."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "Enter a username and a password (at least 4 characters)."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+#, python-format
+msgid "User “%(name)s” created."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "Username already exists."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "You cannot delete yourself or remove your own admin rights."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "User deleted."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "Password must be at least 4 characters long."
+msgstr ""
+
+#: src/mylittlebooklist/routes/users.py
+msgid "Password reset."
+msgstr ""
+
+#: src/mylittlebooklist/templates/account.html
+#: src/mylittlebooklist/templates/base.html
+msgid "Account"
+msgstr ""
+
+#: src/mylittlebooklist/templates/account.html
+msgid "Change password"
+msgstr ""
+
+#: src/mylittlebooklist/templates/account.html
+msgid "Current password"
+msgstr ""
+
+#: src/mylittlebooklist/templates/account.html
+#: src/mylittlebooklist/templates/users.html
+msgid "New password"
+msgstr ""
+
+#: src/mylittlebooklist/templates/account.html
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Save"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Search …"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Search books"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Clear search"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Book"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+#: src/mylittlebooklist/templates/users.html
+msgid "Users"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Log out"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+msgid "Toggle light/dark mode"
+msgstr ""
+
+#: src/mylittlebooklist/templates/base.html
+#: src/mylittlebooklist/templates/gallery.html
+msgid "My booklist"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "Cover: %(title)s"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+msgid "My rating"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+msgid "Remove rating"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#, python-format
+msgid "%(num)d of 5"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Read"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/gallery.html
+msgid "I own it"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Categories"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Edit"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+msgid "Remove book from your collection?"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+msgid "Remove from collection"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+msgid "Not in your collection."
+msgstr ""
+
+#: src/mylittlebooklist/templates/book.html
+msgid "Add to my collection"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "New book"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Remove category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Edit book"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "e.g. 978-3-16-148410-0"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Look up"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid ""
+"ISBN-10 or ISBN-13 – hyphens and spaces are allowed. “Look up” fetches "
+"data and cover from OpenLibrary."
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Cover preview"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Current cover"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "No cover"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Upload cover"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Title"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Author"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Year of publication"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "– none –"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Add category …"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Description"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "(visible to all users who have this book)"
+msgstr ""
+
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Cancel"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "Search: “%(q)s”"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Catalog"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "%(num)d book"
+msgid_plural "%(num)d books"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Show"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "My categories"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "My books"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Filter read"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "All"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Unread"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Filter owned"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Owned"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Not owned"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Reset filters"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "No category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Nothing found."
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Show all books"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "No books yet."
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Add your first book"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "fastest by ISBN."
+msgstr ""
+
+#: src/mylittlebooklist/templates/login.html
+msgid "Log in"
+msgstr ""
+
+#: src/mylittlebooklist/templates/login.html
+#: src/mylittlebooklist/templates/users.html
+msgid "Username"
+msgstr ""
+
+#: src/mylittlebooklist/templates/login.html
+#: src/mylittlebooklist/templates/users.html
+msgid "Password"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Name"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Books"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Role"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Reset password"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Admin"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "User"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+#, python-format
+msgid "New password for %(name)s"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Set"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Delete user including their collection?"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Delete"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "New user"
+msgstr ""
+
+#: src/mylittlebooklist/templates/users.html
+msgid "Create"
+msgstr ""
+

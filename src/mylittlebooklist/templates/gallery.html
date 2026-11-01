@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "icons.html" as icons %}
+
+{% set current = dict(filters, view=view) %}
+{% macro choice(key, value, label, icon=None) -%}
+<a href="{{ gallery_url(**{key: value}) }}" role="button"
+   {% if current.get(key, '') == value %}aria-current="true"{% else %}class="secondary outline"{% endif %}>
+  {%- if icon %}{{ icon() }} {% endif %}{{ label }}</a>
+{%- endmacro %}
+
+{% macro tiles(books) %}
+<div class="gallery">
+  {% for b in books %}
+  <a class="tile" href="{{ url_for('book_detail', book_id=b.id) }}" title="{{ b.title }} – {{ b.author }}">
+    {% if b.has_cover %}
+    <img src="{{ url_for('cover', book_id=b.id) }}" alt="{{ _('Cover: %(title)s', title=b.title) }}" loading="lazy">
+    {% else %}
+    <div class="placeholder"><strong>{{ b.title }}</strong><span>{{ b.author }}</span></div>
+    {% endif %}
+    <div class="caption">
+      <span class="t">{{ b.title }}</span>
+      <span class="a">{{ b.author }}</span>
+      {% if b.rating or b.is_read or b.is_owned %}
+      <span class="meta">
+        {% if b.rating %}<span class="stars">{{ "★" * b.rating }}</span>{% endif %}
+        {% if b.is_read %}<span title="{{ _('Read') }}" aria-label="{{ _('Read') }}">{{ icons.read() }}</span>{% endif %}
+        {% if b.is_owned %}<span title="{{ _('I own it') }}" aria-label="{{ _('I own it') }}">{{ icons.owned() }}</span>{% endif %}
+      </span>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="gallery-head">
+  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif view == "catalog" %}{{ _("Catalog") }}{% else %}{{ _("My booklist") }}{% endif %}</h2>
+  <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
+</div>
+
+<div class="filters">
+  <div role="group" aria-label="{{ _('Show') }}">
+    {{ choice("view", "", _("My categories")) }}{{ choice("view", "books", _("My books")) }}{{ choice("view", "catalog", _("Catalog")) }}
+  </div>
+  <div role="group" aria-label="{{ _('Filter read') }}">
+    {{ choice("read", "", _("All")) }}{{ choice("read", "1", _("Read"), icons.read) }}{{ choice("read", "0", _("Unread")) }}
+  </div>
+  <div role="group" aria-label="{{ _('Filter owned') }}">
+    {{ choice("owned", "", _("All")) }}{{ choice("owned", "1", _("Owned"), icons.owned) }}{{ choice("owned", "0", _("Not owned")) }}
+  </div>
+  {% if filters %}<a href="{{ gallery_url(read='', owned='') }}" class="reset">{{ _("Reset filters") }}</a>{% endif %}
+</div>
+
+{% if shelves %}
+{% for name, shelf in shelves %}
+<details class="shelf" open data-name="{{ name }}">
+  <summary>{{ name or _("No category") }}</summary>
+  {{ tiles(shelf) }}
+</details>
+{% endfor %}
+{# Remember collapsed shelves, but never hide search or filter results #}
+{% if not (q or filters) %}
+<script>
+  try {
+    for (const shelf of document.querySelectorAll(".shelf")) {
+      const key = "shelf-closed:" + shelf.dataset.name;
+      if (localStorage.getItem(key)) shelf.open = false;
+      shelf.addEventListener("toggle", () => {
+        try { shelf.open ? localStorage.removeItem(key) : localStorage.setItem(key, "1"); } catch (e) {}
+      });
+    }
+  } catch (e) {}
+</script>
+{% endif %}
+{% elif books %}
+{{ tiles(books) }}
+{% elif q or filters %}
+<p class="muted">{{ _("Nothing found.") }} <a href="{{ url_for('gallery') }}">{{ _("Show all books") }}</a></p>
+{% else %}
+<p class="muted">{{ _("No books yet.") }} <a href="{{ url_for('book_new') }}">{{ _("Add your first book") }}</a> – {{ _("fastest by ISBN.") }}</p>
+{% endif %}
+{% endblock %}

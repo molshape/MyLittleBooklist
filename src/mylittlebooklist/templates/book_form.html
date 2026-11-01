@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% import "icons.html" as icons %}
+{% set crumbs = [(_("New book"), None)] if new
+   else [(book.title, url_for('book_detail', book_id=book.id)), (_("Edit"), None)] %}
+{% block title %}{{ _("New book") if new else _("Edit") }} · {% endblock %}
+{% macro tag(name) -%}
+<span class="tag"><span>{{ name }}</span><input type="hidden" name="category" value="{{ name }}"><button type="button" class="link" aria-label="{{ _('Remove category') }}">×</button></span>
+{%- endmacro %}
+{% block content %}
+<article>
+  <h2>{{ _("New book") if new else _("Edit book") }}</h2>
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('book_new') if new else url_for('book_edit', book_id=book.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="cover_url" value="{{ book.cover_url or '' }}">
+
+    <label for="isbn">ISBN</label>
+    <fieldset role="group" class="isbn-group">
+      <input id="isbn" name="isbn" value="{{ book.isbn or '' }}" placeholder="{{ _('e.g. 978-3-16-148410-0') }}"
+             aria-describedby="isbn-hint">
+      <button type="submit" name="action" value="lookup" formnovalidate>{{ _("Look up") }}</button>
+    </fieldset>
+    <small id="isbn-hint" class="muted">{{ _("ISBN-10 or ISBN-13 – hyphens and spaces are allowed. “Look up” fetches data and cover from OpenLibrary.") }}</small>
+
+    <div class="form-grid">
+      <div class="form-cover">
+        {% if book.cover_url %}
+        <img src="{{ book.cover_url }}" alt="{{ _('Cover preview') }}">
+        {% elif book.cover and book.id %}
+        <img src="{{ url_for('cover', book_id=book.id) }}" alt="{{ _('Current cover') }}">
+        {% else %}
+        <div class="placeholder"><span>{{ _("No cover") }}</span></div>
+        {% endif %}
+        <label>{{ _("Upload cover") }} <input type="file" name="cover" accept="image/*"></label>
+      </div>
+      <div>
+        <label>{{ _("Title") }} * <input name="title" value="{{ book.title or '' }}" required></label>
+        <div class="grid">
+          <label>{{ _("Author") }} <input name="author" value="{{ book.author or '' }}"></label>
+          <label>{{ _("Year of publication") }} <input name="year" value="{{ book.year or '' }}" inputmode="numeric" pattern="-?\d{1,4}"></label>
+        </div>
+        <label>{{ _("My rating") }}
+          <select name="rating">
+            <option value="">{{ _("– none –") }}</option>
+            {% for i in range(5, 0, -1) %}
+            <option value="{{ i }}" {{ 'selected' if book.rating == i }}>{{ "★" * i }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="flags">
+          <label><input type="checkbox" role="switch" name="is_read" {{ 'checked' if book.is_read }}> {{ icons.read() }} {{ _("Read") }}</label>
+          <label><input type="checkbox" role="switch" name="is_owned" {{ 'checked' if book.is_owned }}> {{ icons.owned() }} {{ _("I own it") }}</label>
+        </div>
+        <label for="category-input">{{ _("Categories") }}</label>
+        <div class="tags">
+          {% for name in book.categories or [] %}{{ tag(name) }}{% endfor %}
+          {# Text left in the field is saved too; commas separate several names, also without JavaScript #}
+          <input id="category-input" name="new_category" autocomplete="off" placeholder="{{ _('Add category …') }}"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="category-options">
+          <ul id="category-options" role="listbox" aria-label="{{ _('Categories') }}" hidden>
+            {% for name in user_categories() %}<li role="option" id="category-option-{{ loop.index }}">{{ name }}</li>{% endfor %}
+          </ul>
+        </div>
+        <template id="category-tag">{{ tag("") }}</template>
+        <label>{{ _("Description") }} <small class="muted">{{ _("(visible to all users who have this book)") }}</small>
+          <textarea name="description" rows="6">{{ book.description or '' }}</textarea>
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" name="action" value="save">{{ _("Save") }}</button>
+      <a href="{{ url_for('gallery') if new else url_for('book_detail', book_id=book.id) }}" role="button" class="secondary outline">{{ _("Cancel") }}</a>
+    </div>
+  </form>
+</article>
+<script>
+  (() => {
+    const input = document.getElementById("category-input");
+    const box = input.parentElement;
+    const list = document.getElementById("category-options");
+    const items = [...list.children];
+    const known = items.map((item) => item.textContent);
+    const chosen = () => [...box.querySelectorAll("input[type=hidden]")].map((tag) => tag.value);
+    const same = (a, b) => a.toLowerCase() === b.toLowerCase();
+    const active = () => items.find((item) => item.getAttribute("aria-selected") === "true");
+
+    function setActive(item) {
+      items.forEach((i) => i.setAttribute("aria-selected", i === item));
+      if (item) {
+        input.setAttribute("aria-activedescendant", item.id);
+        item.scrollIntoView({ block: "nearest" });
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    function showList(show) {
+      list.hidden = !show;
+      input.setAttribute("aria-expanded", show);
+      setActive(null);
+    }
+
+    // Known categories containing the typed text, without those already chosen
+    function refreshList() {
+      const query = input.value.trim().toLowerCase();
+      const taken = chosen();
+      for (const item of items) {
+        const name = item.textContent;
+        item.hidden = taken.some((t) => same(t, name)) || !name.toLowerCase().includes(query);
+      }
+      showList(items.some((item) => !item.hidden));
+    }
+
+    function addTags(text) {
+      for (const raw of text.split(",")) {
+        const typed = raw.trim();
+        if (!typed || chosen().some((t) => same(t, typed))) continue;
+        const name = known.find((k) => same(k, typed)) || typed;
+        const tag = document.getElementById("category-tag").content.cloneNode(true);
+        tag.querySelector("span span").textContent = name;
+        tag.querySelector("input").value = name;
+        box.insertBefore(tag, input);
+      }
+      input.value = "";
+      refreshList();
+    }
+
+    input.addEventListener("input", () => {
+      if (input.value.includes(",")) addTags(input.value);
+      else refreshList();
+    });
+    input.addEventListener("focus", refreshList);
+    input.addEventListener("blur", () => showList(false));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (list.hidden) refreshList();
+        const visible = items.filter((item) => !item.hidden);
+        const step = e.key === "ArrowDown" ? 1 : -1;
+        const index = visible.indexOf(active());
+        setActive(visible[index === -1 && step < 0 ? visible.length - 1 : (index + step + visible.length) % visible.length]);
+      } else if (e.key === "Enter") {
+        e.preventDefault();  // would otherwise trigger the first submit button, the ISBN lookup
+        addTags(active()?.textContent ?? input.value);
+      } else if (e.key === "Escape") {
+        showList(false);
+      } else if (e.key === "Backspace" && !input.value) {
+        box.querySelector(".tag:last-of-type")?.remove();
+        refreshList();
+      }
+    });
+    // mousedown instead of click: the field keeps the focus, so the list isn't closed first
+    list.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const item = e.target.closest("li");
+      if (item) addTags(item.textContent);
+    });
+    box.addEventListener("click", (e) => {
+      const tag = e.target.closest(".tag button")?.closest(".tag");
+      if (tag) {
+        tag.remove();
+        refreshList();
+      }
+      input.focus();
+    });
+  })();
+</script>
+{% endblock %}

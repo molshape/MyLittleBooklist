@@ -23,8 +23,9 @@
             <form action="{{ url_for('gallery') }}" role="search" id="search">
               <input type="search" name="q" placeholder="{{ _('Search …') }}" value="{{ q or '' }}" aria-label="{{ _('Search books') }}">
             </form>
-            {# keep active filters on a new search; outside the form, otherwise Pico's rounding breaks #}
+            {# keep active filters and view on a new search; outside the form, otherwise Pico's rounding breaks #}
             {% for key, value in (filters or {}).items() %}<input type="hidden" form="search" name="{{ key }}" value="{{ value }}">{% endfor %}
+            {% if view %}<input type="hidden" form="search" name="view" value="{{ view }}">{% endif %}
             {% if q %}
             <a href="{{ gallery_url(q='') }}" class="clear-search" aria-label="{{ _('Clear search') }}" title="{{ _('Clear search') }}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -58,7 +59,7 @@
     {% if crumbs %}
     <nav aria-label="breadcrumb">
       <ul>
-        <li><a href="{{ url_for('gallery') }}">{{ _("My books") }}</a></li>
+        <li><a href="{{ url_for('gallery') }}">{{ _("My booklist") }}</a></li>
         {% for label, href in crumbs %}
         <li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>
         {% endfor %}

@@ -45,6 +45,7 @@
 
     <dl>
       <dt>ISBN</dt><dd>{{ book.isbn|isbn if book.isbn else "–" }}</dd>
+      {% if categories %}<dt>{{ _("Categories") }}</dt><dd>{{ categories|join(", ") }}</dd>{% endif %}
     </dl>
 
     <div class="actions">
