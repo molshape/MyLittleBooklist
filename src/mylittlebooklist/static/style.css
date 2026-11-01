@@ -89,6 +89,15 @@ button.link {
 .stars { color: var(--star); }
 .caption .meta { display: flex; align-items: center; gap: .4rem; }
 
+.shelf { margin-bottom: 1.5rem; }
+.shelf summary { font-size: 1.15rem; font-weight: 600; }
+.shelf summary::after { display: none; }  /* replaces Pico's chevron on the far right */
+.shelf summary::before {
+  content: ""; display: inline-block; margin-inline-end: .5em; transition: transform .15s;
+  border-block: .35em solid transparent; border-inline-start: .55em solid currentColor;
+}
+.shelf[open] > summary::before { transform: rotate(90deg); }
+
 /* Filter bar */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }
 .filters [role=group] { width: auto; margin: 0; }

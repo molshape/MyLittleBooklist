@@ -29,7 +29,7 @@ def gallery() -> ResponseReturnValue:
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
     params += [int(v) for v in filters.values()]
-    books = (
+    rows = (
         db()
         .execute(
             f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
@@ -37,13 +37,20 @@ def gallery() -> ResponseReturnValue:
            FROM books b {"LEFT JOIN" if catalog else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
-                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
-           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",  # nosec B608
+                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}""",  # nosec B608
             params,
         )
         .fetchall()
     )
-    return render_template("gallery.html", books=books, q=q, filters=filters, catalog=catalog)
+    books = sorted(rows, key=lambda b: (alpha(b["title"]), alpha(b["author"])))
+    return render_template(
+        "gallery.html",
+        books=books,
+        shelves=group_shelves(books),
+        q=q,
+        filters=filters,
+        catalog=catalog,
+    )
 
 
 @app.template_global()
@@ -57,6 +64,20 @@ def alpha(text: str) -> str:
     """Sort key ignoring case and accents; SQLite's NOCASE is ASCII-only and puts 'Ärger' after 'Z'."""
     decomposed = unicodedata.normalize("NFKD", text)
     return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold()
+
+
+def group_shelves(books: list[sqlite3.Row]) -> list[tuple[str, list[sqlite3.Row]]]:
+    """(category, books) by category name, books keep their order; several shelves per book possible, '' = no category."""
+    categories: dict[int, list[str]] = {}
+    for row in db().execute(
+        "SELECT book_id, category FROM user_book_categories WHERE user_id = ?", (g.user["id"],)
+    ):
+        categories.setdefault(row["book_id"], []).append(row["category"])
+    shelves: dict[str, list[sqlite3.Row]] = {}
+    for book in books:
+        for name in categories.get(book["id"], [""]):
+            shelves.setdefault(name, []).append(book)
+    return sorted(shelves.items(), key=lambda shelf: (not shelf[0], alpha(shelf[0])))
 
 
 @app.template_global()

@@ -130,6 +130,77 @@ def add_categorized(client: FlaskClient, title: str, *categories: str, **fields:
     client.post("/book/new", data={**data, "category": list(categories)})
 
 
+def in_order(html: str, *texts: str) -> bool:
+    positions = [html.index(text) for text in texts]
+    return positions == sorted(positions)
+
+
+def test_gallery_groups_books_on_sorted_shelves(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Ohne Regal")
+    add_categorized(client, "Zebra", "Ärzte")
+    add_categorized(client, "Ähren", "Ärzte")
+    add_categorized(client, "Mitte", "Zoo")
+    add_categorized(client, "Beta", "Bäume")
+    assert in_order(
+        client.get("/").text,
+        'data-name="Ärzte"',
+        'class="t">Ähren<',
+        'class="t">Zebra<',
+        'data-name="Bäume"',
+        'data-name="Zoo"',
+        ">No category<",
+        'class="t">Ohne Regal<',
+    )
+
+
+def test_no_category_shelf_is_shown_from_the_start(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_book(client)
+    assert in_order(client.get("/").text, 'data-name=""', ">No category<", "Der Zauberberg")
+
+
+def test_gallery_without_books_has_no_shelf(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    assert "<details" not in client.get("/").text
+
+
+def test_comma_separates_new_categories(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Buch", new_category="Krimi, Urlaub,")
+    html = client.get("/").text
+    assert 'data-name="Krimi"' in html and 'data-name="Urlaub"' in html
+
+
+def test_book_on_two_shelves_counts_once(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Doppelt", "Krimi", "Urlaub")
+    html = client.get("/").text
+    assert 'data-name="Krimi"' in html and 'data-name="Urlaub"' in html
+    assert html.count('class="t">Doppelt<') == 2
+    assert "1 book" in html
+    assert "Krimi, Urlaub" in client.get("/book/1").text
+
+
+def test_new_category_reuses_existing_spelling(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    add_categorized(client, "Zwei", new_category=" krimi ")
+    html = client.get("/").text
+    assert 'data-name="Krimi"' in html and 'data-name="krimi"' not in html
+
+
+def test_unchecking_removes_book_from_shelf(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Buch", "Krimi", "Urlaub")
+    assert 'name="category" value="Krimi"' in client.get("/book/1/edit").text
+    with client.session_transaction() as s:
+        data = {"csrf": s["csrf"], "title": "Buch", "action": "save", "category": ["Urlaub"]}
+    client.post("/book/1/edit", data=data)
+    html = client.get("/").text
+    assert 'data-name="Krimi"' not in html and 'data-name="Urlaub"' in html
+
+
 def test_new_category_survives_form_error(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     r = post(client, "/book/new", title="", action="save", new_category="Neu")

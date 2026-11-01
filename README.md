@@ -14,6 +14,8 @@ A lightweight, self-hosted web app to track your personal reading history. Unlik
     Browse a visual gallery with detail pages and perform full-text search across all fields.
 - **Shared & Personal Experience:** \
     Support for multiple users with a shared catalog: book data is entered once and shared, while each user maintains their own personal collection, 1–5 star ratings, and "_read_/_owned_" flags.
+- **Personal Categories:** \
+    Sort your books into your own categories, shown as collapsible shelves. A book can be on several shelves.
 - **Smart Filtering:** \
     Easily filter your collection by _read_/_unread_ or _owned_/_not owned_ status.
 - **Seamless User Experience:**
