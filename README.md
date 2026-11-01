@@ -1,4 +1,4 @@
-# 📚 My Little Booklist
+# <img src="src/mylittlebooklist/static/logo.svg" alt="" height="48"> My Little Booklist
 
 [![CI](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml/badge.svg)](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml)
 
