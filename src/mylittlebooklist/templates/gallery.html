@@ -35,7 +35,7 @@
 
 {% block content %}
 <div class="gallery-head">
-  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif catalog %}{{ _("Catalog") }}{% else %}{{ _("My books") }}{% endif %}</h2>
+  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif catalog %}{{ _("Catalog") }}{% else %}{{ _("My booklist") }}{% endif %}</h2>
   <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
 </div>
 
