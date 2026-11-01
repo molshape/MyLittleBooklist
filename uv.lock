@@ -738,7 +738,7 @@ wheels = [
 [[package]]
 name = "mylittlebooklist"
 version = "0.2.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "flask" },
     { name = "flask-babel" },
