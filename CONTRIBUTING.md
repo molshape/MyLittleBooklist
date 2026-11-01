@@ -17,7 +17,7 @@ For larger changes or new features, please open an issue first so we can discuss
 
 ## Adding a language
 
-Follow the steps in the [Translating](README.md#translating) section of the [README.md](README.md):
+Follow the steps in the [Translating](docs/development.md#translating) section of the [development guide](docs/development.md):
 1. create the catalog with `pybabel init`
 2. translate `src/mylittlebooklist/translations/<lang>/LC_MESSAGES/messages.po` using [`messages.pot`](src/mylittlebooklist/translations/messages.pot) as a template
 3. and submit the `.po` file. (The compiled `.mo` files are not committed.)
@@ -31,7 +31,7 @@ Corrections to existing translations are just as welcome.
 - Match the style of the surrounding code.
 - Mark new UI texts with `_("…")` and update the catalogs (`pybabel extract` and `pybabel update`).
 - Run the tests with `uv run pytest` and add a test for new logic.
-- Run `uv run ruff check .`, `uv run ruff format .`, `uv run mypy .`, `uv run bandit -r src` and `uv run pip-audit` – all must pass.
+- Format the code with `uv run ruff format .` and run the [checks](docs/development.md#checks) – all must pass.
 - Describe in the pull request what changed and why.
 
 ## Branches and releases

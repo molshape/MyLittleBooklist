@@ -1,13 +1,14 @@
 services:
-  booklog:
+  my-little-booklist:
     image: ghcr.io/molshape/mylittlebooklist:latest
     build: .
+    container_name: my-little-booklist
     ports:
       - "8000:8000"
     env_file: .env
     volumes:
-      - booklog-data:/data
+      - my-little-booklist-data:/data
     restart: unless-stopped
 
 volumes:
-  booklog-data:
+  my-little-booklist-data:

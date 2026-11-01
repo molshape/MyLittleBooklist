@@ -1,7 +1,7 @@
 """Optional demo data: fills the database (DB_PATH, default books.db) with sample users and books.
 
 Usage: uv run python -m mylittlebooklist.demo
-(in the container: docker compose exec booklog python -m mylittlebooklist.demo)
+(in the container: docker compose exec my-little-booklist python -m mylittlebooklist.demo)
 Safe to run repeatedly – existing users and books are left unchanged.
 """
 
