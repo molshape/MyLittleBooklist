@@ -41,7 +41,7 @@ This downloads the prebuilt image of the latest release. To build from source in
 
 Open http://localhost:8000 and log in with `ADMIN_USER` / `ADMIN_PASSWORD` from `.env`.
 
-The database is created empty on first start and lives in the `booklog-data` volume (`/data/books.db`). To start over, run `docker compose down -v` (⚠️ deletes all data).
+The database is created empty on first start and lives in the `my-little-booklist-data` volume (`/data/books.db`). To start over, run `docker compose down -v` (⚠️ deletes all data).
 
 ## Configuration
 
@@ -61,7 +61,7 @@ The admin account is only created when the database has no users yet; changing `
 The whole library – books, covers, users and ratings – is in the one SQLite file. With Docker, copy it out of the container:
 
 ```sh
-docker compose cp booklog:/data/books.db ./books-backup.db
+docker compose cp my-little-booklist:/data/books.db ./books-backup.db
 ```
 
 To update to the latest release:
@@ -77,7 +77,7 @@ The database is migrated automatically on start. Before migrating, the app saves
 To try the app with sample content, add two users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned and 6 read:
 
 ```sh
-docker compose exec booklog python -m mylittlebooklist.demo
+docker compose exec my-little-booklist python -m mylittlebooklist.demo
 ```
 
 - Takes about a minute and needs internet access: book data and covers come from Open Library, at most one request per second in line with their fair-use rules.
