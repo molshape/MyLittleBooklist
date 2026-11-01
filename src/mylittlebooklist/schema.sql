@@ -26,3 +26,12 @@ CREATE TABLE IF NOT EXISTS user_books (
     is_owned INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY (user_id, book_id)
 );
+
+-- A user's personal categories per book; a category exists as long as a book uses it.
+CREATE TABLE IF NOT EXISTS user_book_categories (
+    user_id  INTEGER NOT NULL,
+    book_id  INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    PRIMARY KEY (user_id, book_id, category),
+    FOREIGN KEY (user_id, book_id) REFERENCES user_books(user_id, book_id) ON DELETE CASCADE
+);

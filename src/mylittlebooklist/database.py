@@ -31,7 +31,16 @@ def remove_orphans() -> None:
 # Schema changes for existing databases, entry n brings a database to version n (PRAGMA
 # user_version). Append only, never edit or reorder entries, and update schema.sql as well
 # so new databases start in the final state.
-MIGRATIONS: list[str] = []
+MIGRATIONS: list[str] = [
+    # IF NOT EXISTS: init_db() has already run schema.sql at this point
+    """CREATE TABLE IF NOT EXISTS user_book_categories (
+        user_id  INTEGER NOT NULL,
+        book_id  INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        PRIMARY KEY (user_id, book_id, category),
+        FOREIGN KEY (user_id, book_id) REFERENCES user_books(user_id, book_id) ON DELETE CASCADE
+    )""",
+]
 
 
 def migrate() -> None:

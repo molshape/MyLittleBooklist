@@ -10,6 +10,7 @@ from mylittlebooklist.app import app
 
 def test_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database, "DB_PATH", os.path.join(tempfile.mkdtemp(), "old.db"))
+    monkeypatch.setattr(database, "MIGRATIONS", [])
 
     def version() -> int:
         return int(database.db().execute("PRAGMA user_version").fetchone()[0])
@@ -42,3 +43,19 @@ def test_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
         database.init_db()
         assert version() == 1  # new database skips existing migrations
         assert not os.path.exists(database.DB_PATH + ".v0.bak")
+
+
+def test_categories_migration_keeps_data() -> None:
+    with app.app_context():
+        conn = database.db()
+        conn.execute("INSERT INTO books (id, title) VALUES (1, 'Alt')")
+        conn.execute("INSERT INTO user_books (user_id, book_id) VALUES (1, 1)")
+        conn.commit()
+        conn.executescript("DROP TABLE user_book_categories; PRAGMA user_version = 0")
+
+        database.init_db()
+
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == len(database.MIGRATIONS)
+        assert conn.execute("SELECT COUNT(*) FROM user_book_categories").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM user_books").fetchone()[0] == 1
+        assert os.path.exists(database.DB_PATH + ".v0.bak")

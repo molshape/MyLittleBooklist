@@ -67,6 +67,7 @@ babel.cfg         extraction config for pybabel
 erDiagram
     users ||--o{ user_books : "has in collection"
     books ||--o{ user_books : "appears in"
+    user_books ||--o{ user_book_categories : "sorted into"
     user_books {
         int user_id PK, FK
         int book_id PK, FK
@@ -74,12 +75,18 @@ erDiagram
         int is_read
         int is_owned
     }
+    user_book_categories {
+        int user_id PK, FK
+        int book_id PK, FK
+        text category PK
+    }
 ```
 
 The full definition is in `src/mylittlebooklist/schema.sql`.
 
 - `books` is a shared catalog: each book exists once, and its data and cover apply to all users.
 - `user_books` holds what is personal: a user's collection, rating and flags.
+- `user_book_categories` holds a user's categories per book. A book can be in several categories, and a category exists as long as one of the user's books uses it.
 - When the last user removes a book, or the last user who has it is deleted, the book and its cover are deleted too (`remove_orphans()` in `database.py`).
 - `PRAGMA user_version` stores the schema version (see [Changing the database schema](#changing-the-database-schema)).
 
