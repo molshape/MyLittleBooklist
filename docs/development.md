@@ -61,6 +61,28 @@ tests/            tests, one file per topic
 babel.cfg         extraction config for pybabel
 ```
 
+## Database
+
+```mermaid
+erDiagram
+    users ||--o{ user_books : "has in collection"
+    books ||--o{ user_books : "appears in"
+    user_books {
+        int user_id PK, FK
+        int book_id PK, FK
+        int rating "1–5 or NULL"
+        int is_read
+        int is_owned
+    }
+```
+
+The full definition is in `src/mylittlebooklist/schema.sql`.
+
+- `books` is a shared catalog: each book exists once, and its data and cover apply to all users.
+- `user_books` holds what is personal: a user's collection, rating and flags.
+- When the last user removes a book, or the last user who has it is deleted, the book and its cover are deleted too (`remove_orphans()` in `database.py`).
+- `PRAGMA user_version` stores the schema version (see [Changing the database schema](#changing-the-database-schema)).
+
 ## Changing the database schema
 
 Existing databases are updated automatically on start. For a schema change:
