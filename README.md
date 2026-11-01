@@ -14,6 +14,8 @@ A lightweight, self-hosted web app to track your personal reading history. Unlik
     Browse a visual gallery with detail pages and perform full-text search across all fields.
 - **Shared & Personal Experience:** \
     Support for multiple users with a shared catalog: book data is entered once and shared, while each user maintains their own personal collection, 1–5 star ratings, and "_read_/_owned_" flags.
+- **Personal Categories:** \
+    Sort your books into your own categories, shown as collapsible shelves. A book can be on several shelves.
 - **Smart Filtering:** \
     Easily filter your collection by _read_/_unread_ or _owned_/_not owned_ status.
 - **Seamless User Experience:**
@@ -74,7 +76,7 @@ The database is migrated automatically on start. Before migrating, the app saves
 
 ## Demo data (optional)
 
-To try the app with sample content, add two users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned and 6 read:
+To try the app with sample content, add two users (`demo`:`demo`, `anna`:`anna`) and 12 books including covers – 10 books per user, 8 of them owned, 6 read and 8 in categories:
 
 ```sh
 docker compose exec my-little-booklist python -m mylittlebooklist.demo

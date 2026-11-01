@@ -67,6 +67,7 @@ babel.cfg         extraction config for pybabel
 erDiagram
     users ||--o{ user_books : "has in collection"
     books ||--o{ user_books : "appears in"
+    user_books ||--o{ user_book_categories : "sorted into"
     user_books {
         int user_id PK, FK
         int book_id PK, FK
@@ -74,12 +75,18 @@ erDiagram
         int is_read
         int is_owned
     }
+    user_book_categories {
+        int user_id PK, FK
+        int book_id PK, FK
+        text category PK
+    }
 ```
 
 The full definition is in `src/mylittlebooklist/schema.sql`.
 
 - `books` is a shared catalog: each book exists once, and its data and cover apply to all users.
 - `user_books` holds what is personal: a user's collection, rating and flags.
+- `user_book_categories` holds a user's categories per book. A book can be in several categories, and a category exists as long as one of the user's books uses it.
 - When the last user removes a book, or the last user who has it is deleted, the book and its cover are deleted too (`remove_orphans()` in `database.py`).
 - `PRAGMA user_version` stores the schema version (see [Changing the database schema](#changing-the-database-schema)).
 
@@ -97,7 +104,7 @@ Before migrating, the app saves a backup next to the database (`books.db.v<versi
 UI texts are written in English and marked with `_("…")` in the Python modules and the templates. The language is picked from the browser's `Accept-Language` header; English is the fallback. Every language folder in `src/mylittlebooklist/translations/` is picked up automatically – no code change needed.
 
 ```sh
-uv run pybabel extract -F babel.cfg --project="My Little Booklist" -o src/mylittlebooklist/translations/messages.pot src/mylittlebooklist   # after changing texts
+uv run pybabel extract -F babel.cfg --add-location=file --project="My Little Booklist" -o src/mylittlebooklist/translations/messages.pot src/mylittlebooklist   # after changing texts
 uv run pybabel update -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations       # merge new texts into all languages
 uv run pybabel init -i src/mylittlebooklist/translations/messages.pot -d src/mylittlebooklist/translations -l eo   # new language, e.g. eo = Esperanto
 uv run pybabel compile -d src/mylittlebooklist/translations   # build the .mo files

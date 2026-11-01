@@ -2,7 +2,8 @@
 
 import re
 import sqlite3
-from typing import Any
+import unicodedata
+from typing import Any, cast
 
 from flask import abort, flash, g, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
@@ -20,7 +21,8 @@ FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_b
 @login_required
 def gallery() -> ResponseReturnValue:
     q = request.args.get("q", "").strip()
-    catalog = request.args.get("all") == "1"  # whole shared catalog instead of own collection
+    # '' = own books on shelves, 'books' = own books as a flat list, 'catalog' = whole shared catalog
+    view = v if (v := request.args.get("view")) in ("books", "catalog") else ""
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
     params = [g.user["id"], q, like, like, like, isbn_like, like]
@@ -28,21 +30,28 @@ def gallery() -> ResponseReturnValue:
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
     params += [int(v) for v in filters.values()]
-    books = (
+    rows = (
         db()
         .execute(
             f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
                   ub.rating, ub.is_read, ub.is_owned
-           FROM books b {"LEFT JOIN" if catalog else "JOIN"} user_books ub
+           FROM books b {"LEFT JOIN" if view == "catalog" else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
-                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}
-           ORDER BY b.author COLLATE NOCASE, b.year, b.title COLLATE NOCASE""",  # nosec B608
+                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}""",  # nosec B608
             params,
         )
         .fetchall()
     )
-    return render_template("gallery.html", books=books, q=q, filters=filters, catalog=catalog)
+    books = sorted(rows, key=lambda b: (alpha(b["title"]), alpha(b["author"])))
+    return render_template(
+        "gallery.html",
+        books=books,
+        shelves=[] if view else group_shelves(books),
+        q=q,
+        filters=filters,
+        view=view,
+    )
 
 
 @app.template_global()
@@ -50,6 +59,56 @@ def gallery_url(**changes: str) -> str:
     """Gallery URL with the current search/filter parameters, some of them changed ('' = remove)."""
     args: dict[str, Any] = {**request.args.to_dict(), **changes}
     return url_for("gallery", **{k: v for k, v in args.items() if v})
+
+
+def alpha(text: str) -> str:
+    """Sort key ignoring case and accents; SQLite's NOCASE is ASCII-only and puts 'Ärger' after 'Z'."""
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold()
+
+
+def group_shelves(books: list[sqlite3.Row]) -> list[tuple[str, list[sqlite3.Row]]]:
+    """(category, books) by category name, books keep their order; several shelves per book possible, '' = no category."""
+    categories: dict[int, list[str]] = {}
+    for row in db().execute(
+        "SELECT book_id, category FROM user_book_categories WHERE user_id = ?", (g.user["id"],)
+    ):
+        categories.setdefault(row["book_id"], []).append(row["category"])
+    shelves: dict[str, list[sqlite3.Row]] = {}
+    for book in books:
+        for name in categories.get(book["id"], [""]):
+            shelves.setdefault(name, []).append(book)
+    return sorted(shelves.items(), key=lambda shelf: (not shelf[0], alpha(shelf[0])))
+
+
+@app.template_global()
+def user_categories() -> list[str]:
+    rows = db().execute(
+        "SELECT DISTINCT category FROM user_book_categories WHERE user_id = ?", (g.user["id"],)
+    )
+    return sorted((row["category"] for row in rows), key=alpha)
+
+
+def book_categories(book_id: int) -> list[str]:
+    rows = db().execute(
+        "SELECT category FROM user_book_categories WHERE user_id = ? AND book_id = ?",
+        (g.user["id"], book_id),
+    )
+    return sorted((row["category"] for row in rows), key=alpha)
+
+
+def set_categories(book_id: int, names: list[str]) -> None:
+    # Reuse the existing spelling, so 'krimi' doesn't open a second shelf next to 'Krimi'
+    existing = {name.casefold(): name for name in user_categories()}
+    chosen = {name.casefold(): existing.get(name.casefold(), name) for name in names}
+    db().execute(
+        "DELETE FROM user_book_categories WHERE user_id = ? AND book_id = ?",
+        (g.user["id"], book_id),
+    )
+    db().executemany(
+        "INSERT INTO user_book_categories (user_id, book_id, category) VALUES (?, ?, ?)",
+        [(g.user["id"], book_id, name) for name in chosen.values()],
+    )
 
 
 def catalog_book(book_id: int) -> sqlite3.Row:
@@ -79,7 +138,9 @@ def owned_book(book_id: int) -> sqlite3.Row:
 @app.route("/book/<int:book_id>")
 @login_required
 def book_detail(book_id: int) -> ResponseReturnValue:
-    return render_template("book.html", book=catalog_book(book_id))
+    return render_template(
+        "book.html", book=catalog_book(book_id), categories=book_categories(book_id)
+    )
 
 
 @app.route("/cover/<int:book_id>")
@@ -166,6 +227,11 @@ def read_form() -> tuple[dict[str, Any], list[str]]:
         "is_read": int("is_read" in f),
         "is_owned": int("is_owned" in f),
         "cover_url": f.get("cover_url", ""),
+        "categories": [
+            name
+            for raw in [*f.getlist("category"), *f.get("new_category", "").split(",")]
+            if (name := raw.strip())
+        ],
     }
     errors = []
     if data["isbn"] and not openlibrary.normalize_isbn(data["isbn"]):
@@ -202,12 +268,14 @@ def do_lookup(data: dict[str, Any], book_id: int | None = None) -> dict[str, Any
     return {**data, **{k: v or "" for k, v in found.items()}, "isbn": isbn}
 
 
-def insert_user_book(book_id: int | None, data: dict[str, Any], ignore: bool = False) -> None:
-    db().execute(
+def insert_user_book(book_id: int, data: dict[str, Any], ignore: bool = False) -> None:
+    cur = db().execute(
         f"INSERT {'OR IGNORE ' if ignore else ''}INTO user_books"  # nosec B608
         " (user_id, book_id, rating, is_read, is_owned) VALUES (?, ?, ?, ?, ?)",
         (g.user["id"], book_id, data["rating"], data["is_read"], data["is_owned"]),
     )
+    if cur.rowcount:  # a book that is already in the collection keeps its categories
+        set_categories(book_id, data["categories"])
 
 
 def add_to_collection(book_id: int, data: dict[str, Any]) -> ResponseReturnValue:
@@ -252,10 +320,11 @@ def book_new() -> ResponseReturnValue:
             mime,
         ),
     )
-    insert_user_book(cur.lastrowid, data)
+    book_id = cast(int, cur.lastrowid)
+    insert_user_book(book_id, data)
     db().commit()
     flash(_("Book saved."), "ok")
-    return redirect(url_for("book_detail", book_id=cur.lastrowid))
+    return redirect(url_for("book_detail", book_id=book_id))
 
 
 @app.route("/book/<int:book_id>/edit", methods=["GET", "POST"])
@@ -263,7 +332,10 @@ def book_new() -> ResponseReturnValue:
 def book_edit(book_id: int) -> ResponseReturnValue:
     book = owned_book(book_id)
     if request.method == "GET":
-        return render_template("book_form.html", book=book, new=False)
+        categories = book_categories(book_id)
+        return render_template(
+            "book_form.html", book={**dict(book), "categories": categories}, new=False
+        )
     data, errors = read_form()
     data["id"], data["cover"] = book_id, book["cover"]
     if request.form.get("action") == "lookup":
@@ -298,6 +370,7 @@ def book_edit(book_id: int) -> ResponseReturnValue:
         "UPDATE user_books SET rating=?, is_read=?, is_owned=? WHERE user_id=? AND book_id=?",
         (data["rating"], data["is_read"], data["is_owned"], g.user["id"], book_id),
     )
+    set_categories(book_id, data["categories"])
     db().commit()
     flash(_("Changes saved."), "ok")
     return redirect(url_for("book_detail", book_id=book_id))
