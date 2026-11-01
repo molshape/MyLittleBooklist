@@ -65,9 +65,38 @@ def remove_orphans() -> None:
     db().execute("DELETE FROM books WHERE id NOT IN (SELECT book_id FROM user_books)")
 
 
+# Schema changes for existing databases, entry n brings a database to version n (PRAGMA
+# user_version). Append only, never edit or reorder entries, and update schema.sql as well
+# so new databases start in the final state.
+MIGRATIONS: list[str] = []
+
+
+def migrate() -> None:
+    version: int = db().execute("PRAGMA user_version").fetchone()[0]
+    if version > len(MIGRATIONS):
+        raise RuntimeError(f"Database version {version} is newer than this app supports")
+    if version == len(MIGRATIONS):
+        return
+    backup = sqlite3.connect(f"{DB_PATH}.v{version}.bak")
+    db().backup(backup)
+    backup.close()
+    for i, sql in enumerate(MIGRATIONS[version:], start=version + 1):
+        try:
+            # One transaction per step: a failing step leaves the database at version i - 1
+            db().executescript(f"BEGIN; {sql}; PRAGMA user_version = {i}; COMMIT;")
+        except sqlite3.Error:
+            db().rollback()
+            raise
+        app.logger.info("Database migrated to version %d", i)
+
+
 def init_db() -> None:
+    is_new = not db().execute("SELECT 1 FROM sqlite_master WHERE name = 'users'").fetchone()
     with open(os.path.join(app.root_path, "schema.sql"), encoding="utf-8") as f:
         db().executescript(f.read())
+    if is_new:
+        db().execute(f"PRAGMA user_version = {len(MIGRATIONS)}")
+    migrate()
     if db().execute("SELECT 1 FROM users").fetchone():
         return
     name = os.environ.get("ADMIN_USER", "admin")

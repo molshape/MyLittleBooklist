@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import tempfile
 import time
 
@@ -120,6 +121,42 @@ def test_demo_ratios() -> None:
         assert sum(owned for _, _, owned in entries) == 8
         assert sum(read for _, read, _ in entries) == 6
         assert all(read for rating, read, _ in entries if rating)
+
+
+def test_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(bookapp, "DB_PATH", os.path.join(tempfile.mkdtemp(), "old.db"))
+
+    def version() -> int:
+        return int(bookapp.db().execute("PRAGMA user_version").fetchone()[0])
+
+    with bookapp.app.app_context():
+        bookapp.init_db()
+        assert version() == 0  # new database starts at the current version
+        monkeypatch.setattr(
+            bookapp,
+            "MIGRATIONS",
+            [
+                "ALTER TABLE books ADD COLUMN publisher TEXT",
+                "ALTER TABLE books ADD COLUMN broken TEXT; SELECT * FROM missing",
+            ],
+        )
+        with pytest.raises(sqlite3.OperationalError):
+            bookapp.init_db()
+        assert version() == 1  # first step kept, failed step rolled back
+        columns = [row[1] for row in bookapp.db().execute("PRAGMA table_info(books)")]
+        assert "publisher" in columns and "broken" not in columns
+        assert os.path.exists(bookapp.DB_PATH + ".v0.bak")
+
+        monkeypatch.setattr(bookapp, "MIGRATIONS", [])
+        with pytest.raises(RuntimeError):  # older app must not touch a newer database
+            bookapp.init_db()
+
+    monkeypatch.setattr(bookapp, "DB_PATH", os.path.join(tempfile.mkdtemp(), "new.db"))
+    monkeypatch.setattr(bookapp, "MIGRATIONS", ["ALTER TABLE missing ADD COLUMN never_run TEXT"])
+    with bookapp.app.app_context():
+        bookapp.init_db()
+        assert version() == 1  # new database skips existing migrations
+        assert not os.path.exists(bookapp.DB_PATH + ".v0.bak")
 
 
 def test_demo_seed(monkeypatch: pytest.MonkeyPatch) -> None:
