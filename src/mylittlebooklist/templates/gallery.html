@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "icons.html" as icons %}
 
-{% set current = dict(filters, all="1" if catalog else "") %}
+{% set current = dict(filters, view=view) %}
 {% macro choice(key, value, label, icon=None) -%}
 <a href="{{ gallery_url(**{key: value}) }}" role="button"
    {% if current.get(key, '') == value %}aria-current="true"{% else %}class="secondary outline"{% endif %}>
@@ -35,13 +35,13 @@
 
 {% block content %}
 <div class="gallery-head">
-  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif catalog %}{{ _("Catalog") }}{% else %}{{ _("My booklist") }}{% endif %}</h2>
+  <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif view == "catalog" %}{{ _("Catalog") }}{% else %}{{ _("My booklist") }}{% endif %}</h2>
   <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
 </div>
 
 <div class="filters">
   <div role="group" aria-label="{{ _('Show') }}">
-    {{ choice("all", "", _("My books")) }}{{ choice("all", "1", _("Catalog")) }}
+    {{ choice("view", "", _("My categories")) }}{{ choice("view", "books", _("My books")) }}{{ choice("view", "catalog", _("Catalog")) }}
   </div>
   <div role="group" aria-label="{{ _('Filter read') }}">
     {{ choice("read", "", _("All")) }}{{ choice("read", "1", _("Read"), icons.read) }}{{ choice("read", "0", _("Unread")) }}
@@ -52,7 +52,7 @@
   {% if filters %}<a href="{{ gallery_url(read='', owned='') }}" class="reset">{{ _("Reset filters") }}</a>{% endif %}
 </div>
 
-{% if books %}
+{% if shelves %}
 {% for name, shelf in shelves %}
 <details class="shelf" open data-name="{{ name }}">
   <summary>{{ name or _("No category") }}</summary>
@@ -73,6 +73,8 @@
   } catch (e) {}
 </script>
 {% endif %}
+{% elif books %}
+{{ tiles(books) }}
 {% elif q or filters %}
 <p class="muted">{{ _("Nothing found.") }} <a href="{{ url_for('gallery') }}">{{ _("Show all books") }}</a></p>
 {% else %}

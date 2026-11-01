@@ -74,7 +74,7 @@ def test_shared_catalog(client: FlaskClient) -> None:
     # bob doesn't see admin's book in his collection...
     assert "Der Zauberberg" not in client.get("/").text
     # ...but finds it in the shared catalog, can view it, but not rate or edit it
-    assert "Der Zauberberg" in client.get("/?all=1").text
+    assert "Der Zauberberg" in client.get("/?view=catalog").text
     assert "Add to my collection" in client.get("/book/1").text
     with client.session_transaction() as s:
         assert client.post("/book/1/rate", data={"csrf": s["csrf"]}).status_code == 404
@@ -160,6 +160,39 @@ def test_no_category_shelf_is_shown_from_the_start(client: FlaskClient) -> None:
     assert in_order(client.get("/").text, 'data-name=""', ">No category<", "Der Zauberberg")
 
 
+def test_flat_views_sort_by_title_without_shelves(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Zebra", "Krimi")
+    add_categorized(client, "Ähren", "Urlaub")
+    add_categorized(client, "Mitte")
+    for view in ("books", "catalog"):
+        html = client.get(f"/?view={view}").text
+        assert "<details" not in html
+        assert in_order(html, 'class="t">Ähren<', 'class="t">Mitte<', 'class="t">Zebra<')
+
+
+def test_unknown_view_shows_shelves(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_book(client)
+    assert "<details" in client.get("/?view=nonsense").text
+
+
+def test_books_view_only_lists_own_books(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_book(client)
+    post(client, "/users", username="bob", password="bobpw")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    assert "Der Zauberberg" not in client.get("/?view=books").text
+
+
+def test_search_keeps_view(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    hidden = 'form="search" name="view" value="catalog"'
+    assert hidden in client.get("/?view=catalog").text
+    assert 'name="view"' not in client.get("/").text
+
+
 def test_gallery_without_books_has_no_shelf(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     assert "<details" not in client.get("/").text
@@ -213,7 +246,7 @@ def test_categories_are_personal(client: FlaskClient) -> None:
     post(client, "/users", username="bob", password="bobpw")
     post(client, "/logout")
     login(client, "bob", "bobpw")
-    assert "Geheim" not in client.get("/?all=1").text
+    assert "Geheim" not in client.get("/?view=catalog").text
     assert "Geheim" not in client.get("/book/1").text
     assert "Geheim" not in client.get("/book/new").text
 

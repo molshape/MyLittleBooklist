@@ -21,7 +21,8 @@ FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_b
 @login_required
 def gallery() -> ResponseReturnValue:
     q = request.args.get("q", "").strip()
-    catalog = request.args.get("all") == "1"  # whole shared catalog instead of own collection
+    # '' = own books on shelves, 'books' = own books as a flat list, 'catalog' = whole shared catalog
+    view = v if (v := request.args.get("view")) in ("books", "catalog") else ""
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
     params = [g.user["id"], q, like, like, like, isbn_like, like]
@@ -34,7 +35,7 @@ def gallery() -> ResponseReturnValue:
         .execute(
             f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
                   ub.rating, ub.is_read, ub.is_owned
-           FROM books b {"LEFT JOIN" if catalog else "JOIN"} user_books ub
+           FROM books b {"LEFT JOIN" if view == "catalog" else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
                   OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}""",  # nosec B608
@@ -46,10 +47,10 @@ def gallery() -> ResponseReturnValue:
     return render_template(
         "gallery.html",
         books=books,
-        shelves=group_shelves(books),
+        shelves=[] if view else group_shelves(books),
         q=q,
         filters=filters,
-        catalog=catalog,
+        view=view,
     )
 
 
