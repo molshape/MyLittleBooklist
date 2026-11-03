@@ -1,6 +1,10 @@
 # <img src="src/mylittlebooklist/static/logo.svg" alt="" height="48"> My Little Booklist
 
 [![CI](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml/badge.svg)](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/molshape/MyLittleBooklist?sort=semver&label=version)](https://github.com/molshape/MyLittleBooklist/tags)
+[![License: MIT](https://img.shields.io/github/license/molshape/MyLittleBooklist)](LICENSE)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
+[![Docker image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker&logoColor=white)](https://github.com/molshape/MyLittleBooklist/pkgs/container/mylittlebooklist)
 
 A lightweight, self-hosted web app to track your personal reading history. Unlike traditional library managers that focus on shelf inventory, **My Little Booklist** is designed to be a simple archive of the books you have read or want to read – perfect for building a digital "Read" list without the overhead of full library management systems.
 
