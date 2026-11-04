@@ -97,6 +97,11 @@ button.link {
   border-block: .35em solid transparent; border-inline-start: .55em solid currentColor;
 }
 .shelf[open] > summary::before { transform: rotate(90deg); }
+.shelf-action { margin-inline-start: .5em; color: var(--pico-muted-color); font-size: .9em; }
+.shelf-action:hover { color: var(--pico-primary); }
+.shelf-rename { flex-wrap: wrap; margin-bottom: 1rem; }
+.shelf-rename input[name=new] { flex: 1 1 8rem; max-width: 24rem; }
+.shelf-rename button { width: auto; }
 
 /* Filter bar */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }

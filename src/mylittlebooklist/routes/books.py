@@ -111,6 +111,53 @@ def set_categories(book_id: int, names: list[str]) -> None:
     )
 
 
+@app.post("/category/rename")
+@login_required
+def rename_category() -> ResponseReturnValue:
+    old = request.form.get("old", "")
+    new = request.form.get("new", "").strip()
+    categories = user_categories()
+    if old not in categories:
+        abort(404)
+    if not new or "," in new:  # read_form splits category names at commas
+        flash(_("A category name must not be empty or contain a comma."), "error")
+        return redirect(gallery_url())
+    # Reuse the existing spelling; old is left out so 'krimi' can be respelled to 'Krimi'
+    target = {name.casefold(): name for name in categories if name != old}.get(new.casefold())
+    new = target or new
+    if new != old:  # the DELETE below would otherwise remove the whole category
+        db().execute(
+            "UPDATE OR IGNORE user_book_categories SET category = ? WHERE user_id = ? AND category = ?",
+            (new, g.user["id"], old),
+        )
+        # What is left was already in the target category
+        db().execute(
+            "DELETE FROM user_book_categories WHERE user_id = ? AND category = ?",
+            (g.user["id"], old),
+        )
+        db().commit()
+        if target:
+            flash(_("Category merged into “%(name)s”.", name=new), "ok")
+        else:
+            flash(_("Category renamed to “%(name)s”.", name=new), "ok")
+    return redirect(gallery_url())
+
+
+@app.post("/category/delete")
+@login_required
+def delete_category() -> ResponseReturnValue:
+    name = request.form.get("name", "")
+    if name not in user_categories():
+        abort(404)
+    db().execute(
+        "DELETE FROM user_book_categories WHERE user_id = ? AND category = ?",
+        (g.user["id"], name),
+    )
+    db().commit()
+    flash(_("Category “%(name)s” deleted. Its books stay in your collection.", name=name), "ok")
+    return redirect(gallery_url())
+
+
 def catalog_book(book_id: int) -> sqlite3.Row:
     """Any book of the shared catalog; 'mine' tells whether it is in the user's collection."""
     book: sqlite3.Row | None = (

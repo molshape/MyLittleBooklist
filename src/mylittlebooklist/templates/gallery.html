@@ -54,11 +54,47 @@
 
 {% if shelves %}
 {% for name, shelf in shelves %}
+{# Outside the summary: forms are invalid there, and the space key must not toggle the shelf while typing #}
+{% if name %}
+<form action="{{ url_for('rename_category', **request.args) }}" method="post" class="row shelf-rename" hidden>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="old" value="{{ name }}">
+  <input type="text" name="new" value="{{ name }}" required aria-label="{{ _('New category name') }}">
+  <button type="submit">{{ _("Save") }}</button>
+  <button type="button" class="secondary outline cancel">{{ _("Cancel") }}</button>
+</form>
+<form action="{{ url_for('delete_category', **request.args) }}" method="post" id="delete-shelf-{{ loop.index }}" hidden
+      onsubmit="return confirm({{ _('Delete category “%(name)s”? Its books stay in your collection.', name=name)|tojson|forceescape }})">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="name" value="{{ name }}">
+</form>
+{% endif %}
 <details class="shelf" open data-name="{{ name }}">
-  <summary>{{ name or _("No category") }}</summary>
+  <summary><span>{{ name or _("No category") }}</span>
+    {%- if name %}
+    <button type="button" class="link shelf-action rename" title="{{ _('Rename category') }}" aria-label="{{ _('Rename category') }}">{{ icons.pencil() }}</button>
+    <button type="submit" form="delete-shelf-{{ loop.index }}" class="link shelf-action" title="{{ _('Delete category') }}" aria-label="{{ _('Delete category') }}">{{ icons.trash() }}</button>
+    {%- endif %}
+  </summary>
   {{ tiles(shelf) }}
 </details>
 {% endfor %}
+<script>
+  for (const form of document.querySelectorAll(".shelf-rename")) {
+    const summary = form.parentElement.querySelector(`.shelf[data-name="${CSS.escape(form.elements.old.value)}"] > summary`);
+    const input = form.elements.new;
+    const close = () => { form.hidden = true; summary.hidden = false; input.value = input.defaultValue; };
+    summary.querySelector(".rename").addEventListener("click", (event) => {
+      event.preventDefault();
+      form.hidden = false;
+      summary.hidden = true;
+      input.focus();
+      input.select();
+    });
+    form.querySelector(".cancel").addEventListener("click", close);
+    input.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
+  }
+</script>
 {# Remember collapsed shelves, but never hide search or filter results #}
 {% if not (q or filters) %}
 <script>
