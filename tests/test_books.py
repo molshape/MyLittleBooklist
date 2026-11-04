@@ -271,3 +271,116 @@ def test_removing_book_removes_its_categories(client: FlaskClient) -> None:
     with app.app_context():
         count = database.db().execute("SELECT COUNT(*) FROM user_book_categories").fetchone()[0]
     assert count == 0
+
+
+def shelves_of(username: str = "admin") -> dict[str, set[str]]:
+    """{category: titles} of a user's categorized books."""
+    with app.app_context():
+        rows = (
+            database.db()
+            .execute(
+                """SELECT c.category, b.title FROM user_book_categories c
+                   JOIN books b ON b.id = c.book_id JOIN users u ON u.id = c.user_id
+                   WHERE u.username = ?""",
+                (username,),
+            )
+            .fetchall()
+        )
+    shelves: dict[str, set[str]] = {}
+    for row in rows:
+        shelves.setdefault(row["category"], set()).add(row["title"])
+    return shelves
+
+
+def test_rename_category_moves_all_books(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    add_categorized(client, "Zwei", "Krimi", "Urlaub")
+    r = post(client, "/category/rename", old="Krimi", new=" Thriller ")
+    assert "Category renamed" in r.text
+    assert shelves_of() == {"Thriller": {"Eins", "Zwei"}, "Urlaub": {"Zwei"}}
+
+
+def test_rename_category_to_same_name_keeps_books(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    post(client, "/category/rename", old="Krimi", new="Krimi")
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_rename_category_can_change_spelling(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "krimi")
+    post(client, "/category/rename", old="krimi", new="Krimi")
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_rename_category_merges_into_existing(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Beide", "Krimi", "Krimis")
+    add_categorized(client, "Alt", "Krimis")
+    add_categorized(client, "Ziel", "Krimi")
+    r = post(client, "/category/rename", old="Krimis", new="krimi")
+    assert "Category merged" in r.text
+    assert shelves_of() == {"Krimi": {"Beide", "Alt", "Ziel"}}
+
+
+@pytest.mark.parametrize("new", ["", "   ", "Krimi, Urlaub"])
+def test_rename_category_rejects_invalid_names(client: FlaskClient, new: str) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    r = post(client, "/category/rename", old="Krimi", new=new)
+    assert "must not be empty" in r.text
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_category_actions_need_an_existing_category(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins")
+    assert post(client, "/category/rename", old="", new="Neu").status_code == 404
+    assert post(client, "/category/delete", name="Fremd").status_code == 404
+
+
+def test_delete_category_keeps_books(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Nur hier", "Krimi")
+    add_categorized(client, "Auch dort", "Krimi", "Urlaub")
+    r = post(client, "/category/delete", name="Krimi")
+    assert "Category “Krimi” deleted" in r.text
+    assert shelves_of() == {"Urlaub": {"Auch dort"}}
+    assert in_order(r.text, 'data-name="Urlaub"', 'data-name=""', 'class="t">Nur hier<')
+
+
+def test_category_actions_only_affect_own_categories(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    post(client, "/users", username="bob", password="bobpw")
+    add_categorized(client, "Buch", "Krimi", isbn="9783161484100")
+    add_categorized(client, "Zweites", "Urlaub", isbn="9780306406157")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    add_categorized(client, "Buch", "Krimi", isbn="9783161484100")
+    add_categorized(client, "Zweites", "Urlaub", isbn="9780306406157")
+    post(client, "/category/rename", old="Krimi", new="Thriller")
+    post(client, "/category/delete", name="Urlaub")
+    assert shelves_of("bob") == {"Thriller": {"Buch"}}
+    assert shelves_of() == {"Krimi": {"Buch"}, "Urlaub": {"Zweites"}}
+
+
+def test_no_category_shelf_has_no_actions(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins")
+    assert "/category/" not in client.get("/").text
+    add_categorized(client, "Zwei", "Krimi")
+    html = client.get("/").text
+    assert html.count('action="/category/rename') == 1
+    assert html.count('action="/category/delete') == 1
+
+
+def test_category_actions_keep_filters(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", is_read="on")
+    assert 'action="/category/rename?read=1"' in client.get("/?read=1").text
+    with client.session_transaction() as s:
+        data = {"csrf": s["csrf"], "old": "Krimi", "new": "Thriller"}
+    r = client.post("/category/rename?read=1", data=data)
+    assert r.headers["Location"] == "/?read=1"
