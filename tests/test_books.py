@@ -154,6 +154,21 @@ def test_gallery_groups_books_on_sorted_shelves(client: FlaskClient) -> None:
     )
 
 
+def test_search_finds_own_categories_only(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Zebra", "Krimi")
+    add_categorized(client, "Mitte")
+    page = client.get("/?q=krimi").text
+    assert "Zebra" in page
+    assert "Mitte" not in page
+
+    post(client, "/users", username="bob", password="bobpw")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    assert "Zebra" in client.get("/?view=catalog").text
+    assert "Zebra" not in client.get("/?view=catalog&q=krimi").text
+
+
 def test_no_category_shelf_is_shown_from_the_start(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     add_book(client)
