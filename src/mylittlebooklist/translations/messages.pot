@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: My Little Booklist VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 06:43+0100\n"
+"POT-Creation-Date: 2026-11-05 12:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -126,6 +126,66 @@ msgstr ""
 msgid "Changes saved."
 msgstr ""
 
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Title"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Author"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Year of publication"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book_form.html
+msgid "Description"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Rating"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/export_cards.html
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Read"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/export_cards.html
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Owned"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Categories"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Yes"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+msgid "No"
+msgstr ""
+
+#: src/mylittlebooklist/routes/export.py
+msgid "Cover"
+msgstr ""
+
 #: src/mylittlebooklist/routes/users.py
 msgid "Enter a username and a password (at least 4 characters)."
 msgstr ""
@@ -215,6 +275,7 @@ msgid "My booklist"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book.html
+#: src/mylittlebooklist/templates/export_cards.html
 #: src/mylittlebooklist/templates/gallery.html
 #, python-format
 msgid "Cover: %(title)s"
@@ -237,18 +298,7 @@ msgstr ""
 #: src/mylittlebooklist/templates/book.html
 #: src/mylittlebooklist/templates/book_form.html
 #: src/mylittlebooklist/templates/gallery.html
-msgid "Read"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book.html
-#: src/mylittlebooklist/templates/book_form.html
-#: src/mylittlebooklist/templates/gallery.html
 msgid "I own it"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book.html
-#: src/mylittlebooklist/templates/book_form.html
-msgid "Categories"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book.html
@@ -315,27 +365,11 @@ msgid "Upload cover"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book_form.html
-msgid "Title"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book_form.html
-msgid "Author"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book_form.html
-msgid "Year of publication"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book_form.html
 msgid "– none –"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book_form.html
 msgid "Add category …"
-msgstr ""
-
-#: src/mylittlebooklist/templates/book_form.html
-msgid "Description"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book_form.html
@@ -345,6 +379,14 @@ msgstr ""
 #: src/mylittlebooklist/templates/book_form.html
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Cancel"
+msgstr ""
+
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Back to the list"
+msgstr ""
+
+#: src/mylittlebooklist/templates/export_cards.html
+msgid "Print or save as PDF"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
@@ -367,6 +409,22 @@ msgid "%(num)d book"
 msgid_plural "%(num)d books"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Export this view"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Excel (2024+) with covers"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "CSV File"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Index cards to print"
+msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Show"
@@ -397,15 +455,32 @@ msgid "Filter owned"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
-msgid "Owned"
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
 msgid "Not owned"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Reset filters"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "New category name"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "Delete category “%(name)s”? Its books stay in your collection."
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "No category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Rename category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Delete category"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
@@ -431,27 +506,6 @@ msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Clear selection"
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
-msgid "New category name"
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
-#, python-format
-msgid "Delete category “%(name)s”? Its books stay in your collection."
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
-msgid "No category"
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
-msgid "Rename category"
-msgstr ""
-
-#: src/mylittlebooklist/templates/gallery.html
-msgid "Delete category"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
