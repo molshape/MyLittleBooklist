@@ -8,6 +8,7 @@ from typing import Any, cast
 from flask import abort, flash, g, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
 from flask_babel import gettext as _
+from flask_babel import ngettext
 
 from mylittlebooklist import openlibrary
 from mylittlebooklist.app import app
@@ -155,6 +156,83 @@ def delete_category() -> ResponseReturnValue:
     )
     db().commit()
     flash(_("Category “%(name)s” deleted. Its books stay in your collection.", name=name), "ok")
+    return redirect(gallery_url())
+
+
+@app.post("/category/assign")
+@login_required
+def assign_category() -> ResponseReturnValue:
+    """Moves, copies or removes selected books; each item is '<book_id>:<source category>'."""
+    mode = request.form.get("mode")
+    if mode not in ("move", "copy", "remove"):
+        abort(404)
+    owned = {
+        row["book_id"]
+        for row in db().execute("SELECT book_id FROM user_books WHERE user_id = ?", (g.user["id"],))
+    }
+    items = []
+    for raw in request.form.getlist("item"):
+        raw_id, _sep, source = raw.partition(":")
+        if not raw_id.isdecimal() or int(raw_id) not in owned:
+            abort(404)
+        items.append((int(raw_id), source))
+
+    target = ""
+    if mode != "remove":
+        target = request.form.get("target", "").strip()
+        if not target or "," in target:  # read_form splits category names at commas
+            flash(_("A category name must not be empty or contain a comma."), "error")
+            return redirect(gallery_url())
+        # Reuse the existing spelling, so 'krimi' doesn't open a second shelf next to 'Krimi'
+        target = {name.casefold(): name for name in user_categories()}.get(
+            target.casefold(), target
+        )
+
+    for book_id, source in items:
+        if mode != "remove":
+            db().execute(
+                "INSERT OR IGNORE INTO user_book_categories (user_id, book_id, category) VALUES (?, ?, ?)",
+                (g.user["id"], book_id, target),
+            )
+        if mode != "copy" and source != target:
+            db().execute(
+                "DELETE FROM user_book_categories WHERE user_id = ? AND book_id = ? AND category = ?",
+                (g.user["id"], book_id, source),
+            )
+    db().commit()
+
+    num = len(
+        {book_id for book_id, _source in items}
+    )  # one book can be selected on several shelves
+    if num and mode == "move":
+        flash(
+            ngettext(
+                "%(num)d book moved to “%(name)s”.",
+                "%(num)d books moved to “%(name)s”.",
+                num,
+                name=target,
+            ),
+            "ok",
+        )
+    elif num and mode == "copy":
+        flash(
+            ngettext(
+                "%(num)d book copied to “%(name)s”.",
+                "%(num)d books copied to “%(name)s”.",
+                num,
+                name=target,
+            ),
+            "ok",
+        )
+    elif num:
+        flash(
+            ngettext(
+                "%(num)d book removed from its category.",
+                "%(num)d books removed from their category.",
+                num,
+            ),
+            "ok",
+        )
     return redirect(gallery_url())
 
 

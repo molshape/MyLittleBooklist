@@ -369,7 +369,9 @@ def test_category_actions_only_affect_own_categories(client: FlaskClient) -> Non
 def test_no_category_shelf_has_no_actions(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     add_categorized(client, "Eins")
-    assert "/category/" not in client.get("/").text
+    html = client.get("/").text
+    assert "/category/rename" not in html
+    assert "/category/delete" not in html
     add_categorized(client, "Zwei", "Krimi")
     html = client.get("/").text
     assert html.count('action="/category/rename') == 1
@@ -384,3 +386,155 @@ def test_category_actions_keep_filters(client: FlaskClient) -> None:
         data = {"csrf": s["csrf"], "old": "Krimi", "new": "Thriller"}
     r = client.post("/category/rename?read=1", data=data)
     assert r.headers["Location"] == "/?read=1"
+
+
+def assign(
+    client: FlaskClient, *items: tuple[str, str], url: str = "/category/assign", **data: str
+) -> TestResponse:
+    """Sends (title, source shelf) pairs the way the selection form does."""
+    with client.session_transaction() as s:
+        form: dict[str, str | list[str]] = {**data, "csrf": s["csrf"]}
+    with app.app_context():
+        ids = {
+            row["title"]: row["id"] for row in database.db().execute("SELECT id, title FROM books")
+        }
+    form["item"] = [f"{ids[title]}:{source}" for title, source in items]
+    return client.post(url, data=form, follow_redirects=True)
+
+
+def test_move_book_to_another_category(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", "Urlaub")
+    add_categorized(client, "Zwei", "Roman")
+    r = assign(client, ("Eins", "Krimi"), target="Roman", mode="move")
+    assert "1 book moved" in r.text
+    assert shelves_of() == {"Roman": {"Eins", "Zwei"}, "Urlaub": {"Eins"}}
+
+
+def test_copy_book_keeps_it_on_its_shelf(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    r = assign(client, ("Eins", "Krimi"), target="Roman", mode="copy")
+    assert "1 book copied" in r.text
+    assert shelves_of() == {"Krimi": {"Eins"}, "Roman": {"Eins"}}
+
+
+def test_move_several_books_from_different_shelves(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    add_categorized(client, "Zwei", "Urlaub")
+    add_categorized(client, "Ohne")
+    r = assign(
+        client, ("Eins", "Krimi"), ("Zwei", "Urlaub"), ("Ohne", ""), target="Roman", mode="move"
+    )
+    assert "3 books moved" in r.text
+    assert shelves_of() == {"Roman": {"Eins", "Zwei", "Ohne"}}
+
+
+def test_move_to_shelf_already_holding_the_book(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", "Roman")
+    assign(client, ("Eins", "Krimi"), target="Roman", mode="move")
+    assert shelves_of() == {"Roman": {"Eins"}}
+
+
+def test_move_to_own_shelf_keeps_the_book(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    assign(client, ("Eins", "Krimi"), target="krimi", mode="move")
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_assign_creates_category_and_reuses_spelling(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    add_categorized(client, "Zwei")
+    assign(client, ("Zwei", ""), target=" krimi ", mode="copy")
+    assign(client, ("Eins", "Krimi"), target="Neu", mode="copy")
+    assert shelves_of() == {"Krimi": {"Eins", "Zwei"}, "Neu": {"Eins"}}
+
+
+def test_source_category_may_contain_a_colon(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Sci:Fi")
+    assign(client, ("Eins", "Sci:Fi"), target="Roman", mode="move")
+    assert shelves_of() == {"Roman": {"Eins"}}
+
+
+@pytest.mark.parametrize("mode", ["move", "copy"])
+@pytest.mark.parametrize("target", ["", "   ", "Krimi, Urlaub"])
+def test_assign_rejects_invalid_targets(client: FlaskClient, mode: str, target: str) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    r = assign(client, ("Eins", "Krimi"), target=target, mode=mode)
+    assert "must not be empty" in r.text
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_remove_only_leaves_the_source_shelf(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", "Urlaub")
+    add_categorized(client, "Zwei", "Krimi")
+    r = assign(client, ("Eins", "Krimi"), ("Zwei", "Krimi"), mode="remove")
+    assert "2 books removed" in r.text
+    assert shelves_of() == {"Urlaub": {"Eins"}}
+    assert in_order(r.text, 'data-name="Urlaub"', 'data-name=""', 'class="t">Zwei<')
+
+
+def test_assign_counts_a_book_selected_on_two_shelves_once(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", "Urlaub")
+    r = assign(client, ("Eins", "Krimi"), ("Eins", "Urlaub"), target="Roman", mode="move")
+    assert "1 book moved" in r.text
+    assert shelves_of() == {"Roman": {"Eins"}}
+
+
+def test_assign_rejects_foreign_books_without_partial_changes(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    post(client, "/users", username="bob", password="bobpw")
+    add_categorized(client, "Fremd", "Krimi")
+    post(client, "/logout")
+    login(client, "bob", "bobpw")
+    add_categorized(client, "Meins", "Urlaub")
+    r = assign(client, ("Meins", "Urlaub"), ("Fremd", "Krimi"), target="Roman", mode="move")
+    assert r.status_code == 404
+    assert shelves_of("bob") == {"Urlaub": {"Meins"}}
+    assert shelves_of() == {"Krimi": {"Fremd"}}
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"mode": "steal"},
+        {"mode": "move", "item": "abc:Krimi"},
+        {"mode": "move", "item": "999:Krimi"},
+    ],
+)
+def test_assign_rejects_bad_requests(client: FlaskClient, data: dict[str, str]) -> None:
+    login(client, "admin", "secret")
+    assert post(client, "/category/assign", target="Roman", **data).status_code == 404
+
+
+def test_assign_needs_csrf_token(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    r = client.post("/category/assign", data={"item": "1:Krimi", "target": "Roman", "mode": "copy"})
+    assert r.status_code == 400
+    assert shelves_of() == {"Krimi": {"Eins"}}
+
+
+def test_assign_keeps_filters(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi", is_read="on")
+    assert 'action="/category/assign?read=1"' in client.get("/?read=1").text
+    with client.session_transaction() as s:
+        data = {"csrf": s["csrf"], "target": "Roman", "mode": "copy"}
+    assert client.post("/category/assign?read=1", data=data).headers["Location"] == "/?read=1"
+
+
+def test_books_can_only_be_selected_on_shelves(client: FlaskClient) -> None:
+    login(client, "admin", "secret")
+    add_categorized(client, "Eins", "Krimi")
+    assert 'class="pick"' in client.get("/").text
+    assert 'class="pick"' not in client.get("/?view=books").text
+    assert 'class="pick"' not in client.get("/?view=catalog").text
