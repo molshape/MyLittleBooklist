@@ -127,7 +127,7 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
 .filters [role=group] { width: auto; margin: 0; }
 .filters [role=button] { padding: .3rem .8rem; font-size: .85rem; white-space: nowrap; }
 .filters [aria-current] .icon { color: inherit; }
-.filters .reset { font-size: .85rem; text-decoration: none; }
+.filters .reset { font-size: .85rem; color: var(--pico-primary); text-decoration: none; }
 
 /* Detail page */
 .detail { display: grid; grid-template-columns: minmax(180px, 300px) 1fr; gap: 2rem; align-items: start; }
