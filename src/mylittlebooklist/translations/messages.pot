@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: My Little Booklist VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-01 14:15+0100\n"
+"POT-Creation-Date: 2026-11-05 06:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,6 +37,46 @@ msgstr ""
 #: src/mylittlebooklist/routes/auth.py
 msgid "Password changed."
 msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+msgid "A category name must not be empty or contain a comma."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "Category merged into “%(name)s”."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "Category renamed to “%(name)s”."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "Category “%(name)s” deleted. Its books stay in your collection."
+msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book moved to “%(name)s”."
+msgid_plural "%(num)d books moved to “%(name)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book copied to “%(name)s”."
+msgid_plural "%(num)d books copied to “%(name)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book removed from its category."
+msgid_plural "%(num)d books removed from their category."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/mylittlebooklist/routes/books.py
 msgid "Book added to your collection."
@@ -136,6 +176,7 @@ msgstr ""
 #: src/mylittlebooklist/templates/account.html
 #: src/mylittlebooklist/templates/book.html
 #: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/gallery.html
 msgid "Save"
 msgstr ""
 
@@ -302,7 +343,13 @@ msgid "(visible to all users who have this book)"
 msgstr ""
 
 #: src/mylittlebooklist/templates/book_form.html
+#: src/mylittlebooklist/templates/gallery.html
 msgid "Cancel"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "Select: %(title)s"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
@@ -362,7 +409,49 @@ msgid "Reset filters"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "%(num)s selected"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Move"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Copy"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Remove from category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Clear selection"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "New category name"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "Delete category “%(name)s”? Its books stay in your collection."
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
 msgid "No category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Rename category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Delete category"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html

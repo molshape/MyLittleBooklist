@@ -28,7 +28,7 @@
             {% if view %}<input type="hidden" form="search" name="view" value="{{ view }}">{% endif %}
             {% if q %}
             <a href="{{ gallery_url(q='') }}" class="clear-search" aria-label="{{ _('Clear search') }}" title="{{ _('Clear search') }}">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </a>
             {% endif %}
           </div>

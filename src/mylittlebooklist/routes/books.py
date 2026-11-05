@@ -8,6 +8,7 @@ from typing import Any, cast
 from flask import abort, flash, g, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
 from flask_babel import gettext as _
+from flask_babel import ngettext
 
 from mylittlebooklist import openlibrary
 from mylittlebooklist.app import app
@@ -25,7 +26,7 @@ def gallery() -> ResponseReturnValue:
     view = v if (v := request.args.get("view")) in ("books", "catalog") else ""
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
-    params = [g.user["id"], q, like, like, like, isbn_like, like]
+    params = [g.user["id"], q, like, like, like, isbn_like, like, g.user["id"], like]
     # Filter per flag: '1' = yes, '0' = no, otherwise all
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
@@ -38,7 +39,9 @@ def gallery() -> ResponseReturnValue:
            FROM books b {"LEFT JOIN" if view == "catalog" else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
-                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}""",  # nosec B608
+                  OR b.isbn LIKE ? OR b.description LIKE ?
+                  OR EXISTS (SELECT 1 FROM user_book_categories c
+                             WHERE c.book_id = b.id AND c.user_id = ? AND c.category LIKE ?)){flag_sql}""",  # nosec B608
             params,
         )
         .fetchall()
@@ -109,6 +112,130 @@ def set_categories(book_id: int, names: list[str]) -> None:
         "INSERT INTO user_book_categories (user_id, book_id, category) VALUES (?, ?, ?)",
         [(g.user["id"], book_id, name) for name in chosen.values()],
     )
+
+
+@app.post("/category/rename")
+@login_required
+def rename_category() -> ResponseReturnValue:
+    old = request.form.get("old", "")
+    new = request.form.get("new", "").strip()
+    categories = user_categories()
+    if old not in categories:
+        abort(404)
+    if not new or "," in new:  # read_form splits category names at commas
+        flash(_("A category name must not be empty or contain a comma."), "error")
+        return redirect(gallery_url())
+    # Reuse the existing spelling; old is left out so 'krimi' can be respelled to 'Krimi'
+    target = {name.casefold(): name for name in categories if name != old}.get(new.casefold())
+    new = target or new
+    if new != old:  # the DELETE below would otherwise remove the whole category
+        db().execute(
+            "UPDATE OR IGNORE user_book_categories SET category = ? WHERE user_id = ? AND category = ?",
+            (new, g.user["id"], old),
+        )
+        # What is left was already in the target category
+        db().execute(
+            "DELETE FROM user_book_categories WHERE user_id = ? AND category = ?",
+            (g.user["id"], old),
+        )
+        db().commit()
+        if target:
+            flash(_("Category merged into “%(name)s”.", name=new), "ok")
+        else:
+            flash(_("Category renamed to “%(name)s”.", name=new), "ok")
+    return redirect(gallery_url())
+
+
+@app.post("/category/delete")
+@login_required
+def delete_category() -> ResponseReturnValue:
+    name = request.form.get("name", "")
+    if name not in user_categories():
+        abort(404)
+    db().execute(
+        "DELETE FROM user_book_categories WHERE user_id = ? AND category = ?",
+        (g.user["id"], name),
+    )
+    db().commit()
+    flash(_("Category “%(name)s” deleted. Its books stay in your collection.", name=name), "ok")
+    return redirect(gallery_url())
+
+
+@app.post("/category/assign")
+@login_required
+def assign_category() -> ResponseReturnValue:
+    """Moves, copies or removes selected books; each item is '<book_id>:<source category>'."""
+    mode = request.form.get("mode")
+    if mode not in ("move", "copy", "remove"):
+        abort(404)
+    owned = {
+        row["book_id"]
+        for row in db().execute("SELECT book_id FROM user_books WHERE user_id = ?", (g.user["id"],))
+    }
+    items = []
+    for raw in request.form.getlist("item"):
+        raw_id, _sep, source = raw.partition(":")
+        if not raw_id.isdecimal() or int(raw_id) not in owned:
+            abort(404)
+        items.append((int(raw_id), source))
+
+    target = ""
+    if mode != "remove":
+        target = request.form.get("target", "").strip()
+        if not target or "," in target:  # read_form splits category names at commas
+            flash(_("A category name must not be empty or contain a comma."), "error")
+            return redirect(gallery_url())
+        # Reuse the existing spelling, so 'krimi' doesn't open a second shelf next to 'Krimi'
+        target = {name.casefold(): name for name in user_categories()}.get(
+            target.casefold(), target
+        )
+
+    for book_id, source in items:
+        if mode != "remove":
+            db().execute(
+                "INSERT OR IGNORE INTO user_book_categories (user_id, book_id, category) VALUES (?, ?, ?)",
+                (g.user["id"], book_id, target),
+            )
+        if mode != "copy" and source != target:
+            db().execute(
+                "DELETE FROM user_book_categories WHERE user_id = ? AND book_id = ? AND category = ?",
+                (g.user["id"], book_id, source),
+            )
+    db().commit()
+
+    num = len(
+        {book_id for book_id, _source in items}
+    )  # one book can be selected on several shelves
+    if num and mode == "move":
+        flash(
+            ngettext(
+                "%(num)d book moved to “%(name)s”.",
+                "%(num)d books moved to “%(name)s”.",
+                num,
+                name=target,
+            ),
+            "ok",
+        )
+    elif num and mode == "copy":
+        flash(
+            ngettext(
+                "%(num)d book copied to “%(name)s”.",
+                "%(num)d books copied to “%(name)s”.",
+                num,
+                name=target,
+            ),
+            "ok",
+        )
+    elif num:
+        flash(
+            ngettext(
+                "%(num)d book removed from its category.",
+                "%(num)d books removed from their category.",
+                num,
+            ),
+            "ok",
+        )
+    return redirect(gallery_url())
 
 
 def catalog_book(book_id: int) -> sqlite3.Row:

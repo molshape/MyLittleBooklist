@@ -1,6 +1,10 @@
 # <img src="src/mylittlebooklist/static/logo.svg" alt="" height="48"> My Little Booklist
 
 [![CI](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml/badge.svg)](https://github.com/molshape/MyLittleBooklist/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/molshape/MyLittleBooklist?sort=semver&label=version)](https://github.com/molshape/MyLittleBooklist/tags)
+[![License: MIT](https://img.shields.io/github/license/molshape/MyLittleBooklist)](LICENSE)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
+[![Docker image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker&logoColor=white)](https://github.com/molshape/MyLittleBooklist/pkgs/container/mylittlebooklist)
 
 A lightweight, self-hosted web app to track your personal reading history. Unlike traditional library managers that focus on shelf inventory, **My Little Booklist** is designed to be a simple archive of the books you have read or want to read – perfect for building a digital "Read" list without the overhead of full library management systems.
 
@@ -15,7 +19,7 @@ A lightweight, self-hosted web app to track your personal reading history. Unlik
 - **Shared & Personal Experience:** \
     Support for multiple users with a shared catalog: book data is entered once and shared, while each user maintains their own personal collection, 1–5 star ratings, and "_read_/_owned_" flags.
 - **Personal Categories:** \
-    Sort your books into your own categories, shown as collapsible shelves. A book can be on several shelves.
+    Sort your books into your own categories, shown as collapsible shelves. A book can be on several shelves. Rename, merge or delete a category directly on its shelf. Drag books to another shelf to move them, hold Shift to copy them, or tick several books to sort them together.
 - **Smart Filtering:** \
     Easily filter your collection by _read_/_unread_ or _owned_/_not owned_ status.
 - **Seamless User Experience:**

@@ -26,23 +26,10 @@ Corrections to existing translations are just as welcome.
 
 ## Pull requests
 
-- Branch from `dev` and open the pull request against `dev`.
+- Branch from `dev` and open the pull request against `dev` – `main` only receives releases.
 - Keep each pull request focused on one change.
 - Match the style of the surrounding code.
 - Mark new UI texts with `_("…")` and update the catalogs (`pybabel extract` and `pybabel update`).
 - Run the tests with `uv run pytest` and add a test for new logic.
 - Format the code with `uv run ruff format .` and run the [checks](docs/development.md#checks) – all must pass.
 - Describe in the pull request what changed and why.
-
-## Branches and releases
-
-- `dev` collects new work. Feature branches are merged into it with `git merge --no-ff` and a merge message listing the changes as `- ` bullets.
-- `main` only receives releases and always reflects the latest one.
-
-To make a release:
-1. bump the version in `pyproject.toml` on `dev` and run `uv lock`
-2. open a pull request from `dev` to `main` and merge it with a merge commit – never squash or rebase
-3. tag the merge commit on `main` with `vX.Y.Z` and push the tag, which publishes the `latest` Docker image
-4. bring `dev` up to date with `git merge --ff-only main`
-
-An urgent fix branches from `main` and is merged back into `main`. Afterwards, merge `main` into `dev`.
