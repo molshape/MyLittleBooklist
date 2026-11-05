@@ -26,7 +26,7 @@ def gallery() -> ResponseReturnValue:
     view = v if (v := request.args.get("view")) in ("books", "catalog") else ""
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
-    params = [g.user["id"], q, like, like, like, isbn_like, like]
+    params = [g.user["id"], q, like, like, like, isbn_like, like, g.user["id"], like]
     # Filter per flag: '1' = yes, '0' = no, otherwise all
     filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
@@ -39,7 +39,9 @@ def gallery() -> ResponseReturnValue:
            FROM books b {"LEFT JOIN" if view == "catalog" else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
-                  OR b.isbn LIKE ? OR b.description LIKE ?){flag_sql}""",  # nosec B608
+                  OR b.isbn LIKE ? OR b.description LIKE ?
+                  OR EXISTS (SELECT 1 FROM user_book_categories c
+                             WHERE c.book_id = b.id AND c.user_id = ? AND c.category LIKE ?)){flag_sql}""",  # nosec B608
             params,
         )
         .fetchall()
