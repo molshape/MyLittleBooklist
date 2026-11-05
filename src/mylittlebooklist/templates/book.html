@@ -20,7 +20,7 @@
       <input type="hidden" name="csrf" value="{{ csrf }}">
       {% for i in range(1, 6) %}
       <button type="submit" name="rating" value="{{ '' if book.rating == i else i }}"
-              class="star {{ 'on' if book.rating and i <= book.rating }}"
+              class="link star {{ 'on' if book.rating and i <= book.rating }}"
               title="{{ _('Remove rating') if book.rating == i else _('%(num)d of 5', num=i) }}">★</button>
       {% endfor %}
     </form>
