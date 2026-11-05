@@ -10,7 +10,7 @@
 
 /* Navigation */
 nav { flex-wrap: wrap; gap: .5rem; }
-header nav a, .tile { text-decoration: none; }
+header nav a { text-decoration: none; }
 nav[aria-label=breadcrumb] { margin-bottom: .5rem; }
 nav .brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1.15rem; }
 nav .brand img { width: 2rem; height: 2rem; }
@@ -26,9 +26,7 @@ nav .search .clear-search {
   display: grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; margin: 0;
   border-radius: 50%; color: var(--pico-muted-color); transition: background-color .15s, color .15s;
 }
-nav .search .clear-search svg {
-  width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;
-}
+nav .search .clear-search .icon { width: 1rem; height: 1rem; }
 nav .search .clear-search:hover { color: var(--pico-primary); background: var(--pico-primary-focus); }
 nav .add { padding: .4rem .9rem; margin: 0; }
 form.inline { display: inline; margin: 0; }
@@ -42,16 +40,16 @@ button.link {
 .muted { color: var(--pico-muted-color); }
 
 /* More visible hover for buttons (Pico only changes the colour slightly) */
-:is(button, [role=button]):not(.link, .star) {
+:is(button, [role=button]):not(.link) {
   transition: background-color .15s, color .15s, box-shadow .15s, transform .15s, filter .15s;
 }
-:is(button, [role=button]):not(.link, .star, :disabled):hover {
+:is(button, [role=button]):not(.link, :disabled):hover {
   transform: translateY(-1px); box-shadow: 0 4px 12px rgb(0 0 0 / .2); filter: brightness(1.12);
 }
 :is(button, [role=button]).outline:not(:disabled):hover {
   background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); filter: none;
 }
-.isbn-group :is(button, [role=button]):hover { transform: none; box-shadow: none; }
+:is(.isbn-group, .filters) :is(button, [role=button]):hover { transform: none; box-shadow: none; }
 .narrow { max-width: 26rem; margin-inline: auto; }
 
 /* Flash messages */
@@ -128,9 +126,8 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }
 .filters [role=group] { width: auto; margin: 0; }
 .filters [role=button] { padding: .3rem .8rem; font-size: .85rem; white-space: nowrap; }
-.filters [role=button]:hover { transform: none; box-shadow: none; }
 .filters [aria-current] .icon { color: inherit; }
-.filters .reset { font-size: .85rem; }
+.filters .reset { font-size: .85rem; text-decoration: none; }
 
 /* Detail page */
 .detail { display: grid; grid-template-columns: minmax(180px, 300px) 1fr; gap: 2rem; align-items: start; }
@@ -140,10 +137,7 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
 .detail .author { color: var(--pico-muted-color); font-size: 1.1rem; }
 .description { white-space: pre-line; }
 .rating { display: flex; gap: .15rem; margin-bottom: 1rem; }
-.rating .star {
-  background: none; border: 0; padding: 0 .1rem; margin: 0; width: auto;
-  font-size: 1.8rem; line-height: 1; color: var(--pico-muted-border-color); cursor: pointer;
-}
+.rating .star { padding: 0 .1rem; font-size: 1.8rem; line-height: 1; color: var(--pico-muted-border-color); }
 .rating .star.on { color: var(--star); }
 .rating:hover .star { color: var(--star); }
 .rating .star:hover ~ .star { color: var(--pico-muted-border-color); }
@@ -163,6 +157,7 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
 .form-cover img, .form-cover .placeholder { margin-bottom: 1rem; }
 .form-cover img { width: 100%; border-radius: var(--radius); }
 .tags {
+  position: relative;
   display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; padding: .35rem .5rem;
   margin-bottom: var(--pico-spacing); border-radius: var(--pico-border-radius);
   border: var(--pico-border-width) solid var(--pico-form-element-border-color);
@@ -180,7 +175,6 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
   flex: 1 1 8rem; width: auto; height: auto; margin: 0; padding: .2rem;
   border: 0; background: none; box-shadow: none;
 }
-.tags { position: relative; }
 #category-options {
   position: absolute; inset-inline: 0; top: calc(100% + .25rem); z-index: 10;
   max-height: 14rem; overflow-y: auto; margin: 0; padding: .25rem;
