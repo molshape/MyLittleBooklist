@@ -59,6 +59,12 @@ button.link {
 
 /* Gallery */
 .gallery-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.gallery-count { display: flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
+details.dropdown.export-menu summary:not([role]) {
+  height: auto; padding: 0 .25rem; border: 0; background: none; color: var(--pico-primary);
+}
+details.dropdown.export-menu summary::after { display: none; }
+details.dropdown.export-menu summary + ul { left: auto; right: 0; width: max-content; }
 .gallery {
   display: grid; gap: 1.5rem 1.25rem;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -193,4 +199,28 @@ body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row *
   .detail-cover, .form-cover { max-width: 220px; margin-inline: auto; }
   .gallery { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 1rem .75rem; }
   body.picking { padding-bottom: 13rem; }
+}
+
+/* Index cards (export) */
+.export-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.export-actions button { width: auto; margin: 0; }
+.export-card { display: flex; gap: 1.5rem; align-items: flex-start; }
+.export-card img { width: 200px; flex: none; border-radius: var(--radius); }
+.export-card dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+.export-card dt { font-weight: 600; }
+.export-card dd { margin: 0; }
+
+@media print {
+  body > header, .export-actions { display: none; }
+  /* Browsers drop backgrounds when printing, so the dark theme's light text would vanish */
+  * { color: #000 !important; background: transparent !important; box-shadow: none !important; }
+  /* Use the page's width: only the margin stays free on the left */
+  @page { margin: 1.5cm; }
+  body > main.container { max-width: none; padding: 0; }
+  .export-card { flex-wrap: wrap; margin: 0; padding: 0; break-after: page; break-inside: avoid; }
+  /* Description below cover and details; lets them all take part in the card's flex layout */
+  .export-text { display: contents; }
+  .export-info { flex: 1 1 0; min-width: 0; }
+  .export-description { flex: 0 0 100%; }
+  .export-card:last-child { break-after: auto; }
 }

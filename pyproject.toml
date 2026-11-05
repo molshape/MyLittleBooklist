@@ -7,6 +7,8 @@ dependencies = [
     "flask-babel>=4.0.0",
     "gunicorn>=26.2.0",
     "isbnlib>=3.10.14",
+    "pillow>=13.0.0",
+    "xlsxwriter>=3.3.1",
 ]
 
 [build-system]
@@ -17,6 +19,7 @@ build-backend = "uv_build"
 dev = [
     "bandit>=1.9.4",
     "mypy>=2.4.0",
+    "openpyxl>=3.1.5",
     "pip-audit>=2.10.1",
     "pytest>=9.1.1",
     "ruff>=0.17.2",
@@ -34,7 +37,7 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [[tool.mypy.overrides]]
 # These libraries ship no type information
-module = ["isbnlib", "flask_babel"]
+module = ["isbnlib", "flask_babel", "openpyxl.*", "xlsxwriter.*"]
 ignore_missing_imports = true
 
 [tool.mypy]

@@ -33,7 +33,7 @@ app.teardown_appcontext(database.close_db)
 app.add_template_filter(openlibrary.format_isbn, "isbn")
 
 # Routes register themselves on app, so they can only be imported once it exists
-from mylittlebooklist.routes import auth, books, users  # noqa: E402,F401
+from mylittlebooklist.routes import auth, books, export, users  # noqa: E402,F401
 
 with app.app_context():
     database.init_db()

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "icons.html" as icons %}
+
+{% block content %}
+<div class="export-actions">
+  <a href="{{ gallery_url() }}" role="button" class="secondary outline">{{ _("Back to the list") }}</a>
+  <button type="button" onclick="window.print()">{{ _("Print or save as PDF") }}</button>
+</div>
+
+{% for b in books %}
+<article class="export-card">
+  {# Not lazy: the browser must have every cover before it prints #}
+  {% if b.has_cover %}<img src="{{ url_for('cover', book_id=b.id) }}" alt="{{ _('Cover: %(title)s', title=b.title) }}">{% endif %}
+  <div class="export-text">
+    <div class="export-info">
+      <h2>{{ b.title }}</h2>
+      {% if b.author %}<p>{{ b.author }}</p>{% endif %}
+      <dl>
+        {% if b.year %}<dt>{{ _("Year of publication") }}</dt><dd>{{ b.year }}</dd>{% endif %}
+        {% if b.isbn %}<dt>ISBN</dt><dd>{{ b.isbn }}</dd>{% endif %}
+        {% if b.rating %}<dt>{{ _("Rating") }}</dt><dd>{{ "★" * b.rating }}</dd>{% endif %}
+        {% if b.is_read %}<dt>{{ _("Read") }}</dt><dd>{{ _("Yes") }}</dd>{% endif %}
+        {% if b.is_owned %}<dt>{{ _("Owned") }}</dt><dd>{{ _("Yes") }}</dd>{% endif %}
+        {% if categories.get(b.id) %}<dt>{{ _("Categories") }}</dt><dd>{{ categories[b.id]|join(", ") }}</dd>{% endif %}
+      </dl>
+    </div>
+    {% if b.description %}<p class="export-description">{{ b.description }}</p>{% endif %}
+  </div>
+</article>
+{% endfor %}
+{% endblock %}

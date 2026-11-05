@@ -18,24 +18,29 @@ from mylittlebooklist.routes.auth import login_required
 FLAGS = {"read": "is_read", "owned": "is_owned"}  # URL name -> column in user_books
 
 
-@app.route("/")
-@login_required
-def gallery() -> ResponseReturnValue:
+def gallery_args() -> tuple[str, str, dict[str, str]]:
+    """Search text, view and flag filters of the current request."""
     q = request.args.get("q", "").strip()
     # '' = own books on shelves, 'books' = own books as a flat list, 'catalog' = whole shared catalog
     view = v if (v := request.args.get("view")) in ("books", "catalog") else ""
+    # Filter per flag: '1' = yes, '0' = no, otherwise all
+    filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
+    return q, view, filters
+
+
+def current_books() -> list[sqlite3.Row]:
+    """The books of the current search, view and filters, sorted by title and author."""
+    q, view, filters = gallery_args()
     like = f"%{q}%"
     isbn_like = "%" + re.sub(r"[-\s]", "", q) + "%"
     params = [g.user["id"], q, like, like, like, isbn_like, like, g.user["id"], like]
-    # Filter per flag: '1' = yes, '0' = no, otherwise all
-    filters = {k: v for k in FLAGS if (v := request.args.get(k)) in ("0", "1")}
     flag_sql = "".join(f" AND ub.{FLAGS[k]} = ?" for k in filters)
     params += [int(v) for v in filters.values()]
     rows = (
         db()
         .execute(
-            f"""SELECT b.id, b.title, b.author, b.year, b.cover IS NOT NULL AS has_cover,
-                  ub.rating, ub.is_read, ub.is_owned
+            f"""SELECT b.id, b.title, b.author, b.year, b.isbn, b.description,
+                  b.cover IS NOT NULL AS has_cover, ub.rating, ub.is_read, ub.is_owned
            FROM books b {"LEFT JOIN" if view == "catalog" else "JOIN"} user_books ub
              ON ub.book_id = b.id AND ub.user_id = ?
            WHERE (? = '' OR b.title LIKE ? OR b.author LIKE ? OR CAST(b.year AS TEXT) LIKE ?
@@ -46,7 +51,14 @@ def gallery() -> ResponseReturnValue:
         )
         .fetchall()
     )
-    books = sorted(rows, key=lambda b: (alpha(b["title"]), alpha(b["author"])))
+    return sorted(rows, key=lambda b: (alpha(b["title"]), alpha(b["author"])))
+
+
+@app.route("/")
+@login_required
+def gallery() -> ResponseReturnValue:
+    q, view, filters = gallery_args()
+    books = current_books()
     return render_template(
         "gallery.html",
         books=books,
@@ -70,13 +82,21 @@ def alpha(text: str) -> str:
     return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold()
 
 
-def group_shelves(books: list[sqlite3.Row]) -> list[tuple[str, list[sqlite3.Row]]]:
-    """(category, books) by category name, books keep their order; several shelves per book possible, '' = no category."""
+def categories_by_book() -> dict[int, list[str]]:
+    """The current user's categories per book id, sorted by name."""
     categories: dict[int, list[str]] = {}
     for row in db().execute(
         "SELECT book_id, category FROM user_book_categories WHERE user_id = ?", (g.user["id"],)
     ):
         categories.setdefault(row["book_id"], []).append(row["category"])
+    for names in categories.values():
+        names.sort(key=alpha)
+    return categories
+
+
+def group_shelves(books: list[sqlite3.Row]) -> list[tuple[str, list[sqlite3.Row]]]:
+    """(category, books) by category name, books keep their order; several shelves per book possible, '' = no category."""
+    categories = categories_by_book()
     shelves: dict[str, list[sqlite3.Row]] = {}
     for book in books:
         for name in categories.get(book["id"], [""]):

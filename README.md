@@ -22,6 +22,8 @@ A lightweight, self-hosted web app to track your personal reading history. Unlik
     Sort your books into your own categories, shown as collapsible shelves. A book can be on several shelves. Rename, merge or delete a category directly on its shelf. Drag books to another shelf to move them, hold Shift to copy them, or tick several books to sort them together.
 - **Smart Filtering:** \
     Easily filter your collection by _read_/_unread_ or _owned_/_not owned_ status.
+- **Export:** \
+    Download exactly what the gallery currently shows (search, view and filters included) as a CSV file or an Excel workbook with the covers inside the cells (Excel 2024 or newer), or open it as printable index cards with one book per page, which your browser can also save as a PDF.
 - **Seamless User Experience:**
     - Dark/light mode support.
     - Multilingual UI (currently English and German), automatically detected from your browser.

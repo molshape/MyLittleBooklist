@@ -53,7 +53,7 @@ src/mylittlebooklist/
   openlibrary.py  ISBN helpers and Open Library lookup
   demo.py         optional demo data loader
   schema.sql      database schema (created automatically on start)
-  routes/         auth.py (login, CSRF, account), books.py (gallery, collection), users.py (admin)
+  routes/         auth.py (login, CSRF, account), books.py (gallery, collection), export.py (CSV, Excel, index cards), users.py (admin)
   templates/      Jinja templates
   static/         CSS and logo
   translations/   translation template (messages.pot) and catalogs per language (messages.po)

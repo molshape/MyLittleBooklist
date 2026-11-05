@@ -43,7 +43,19 @@
 {% block content %}
 <div class="gallery-head">
   <h2>{% if q %}{{ _("Search: “%(q)s”", q=q) }}{% elif view == "catalog" %}{{ _("Catalog") }}{% else %}{{ _("My booklist") }}{% endif %}</h2>
-  <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
+  <div class="gallery-count">
+    <span class="muted">{{ ngettext("%(num)d book", "%(num)d books", books|length) }}</span>
+    {% if books %}
+    <details class="dropdown export-menu">
+      <summary aria-label="{{ _('Export this view') }}" title="{{ _('Export this view') }}">{{ icons.download() }}</summary>
+      <ul>
+        <li><a href="{{ url_for('export_xlsx', **request.args) }}" download>{{ _("Excel (2024+) with covers") }}</a></li>
+        <li><a href="{{ url_for('export_csv', **request.args) }}" download>{{ _("CSV File") }}</a></li>
+        <li><a href="{{ url_for('export_cards', **request.args) }}">{{ _("Index cards to print") }}</a></li>
+      </ul>
+    </details>
+    {% endif %}
+  </div>
 </div>
 
 <div class="filters">

@@ -182,14 +182,14 @@ def test_flat_views_sort_by_title_without_shelves(client: FlaskClient) -> None:
     add_categorized(client, "Mitte")
     for view in ("books", "catalog"):
         html = client.get(f"/?view={view}").text
-        assert "<details" not in html
+        assert '<details class="shelf"' not in html
         assert in_order(html, 'class="t">Ähren<', 'class="t">Mitte<', 'class="t">Zebra<')
 
 
 def test_unknown_view_shows_shelves(client: FlaskClient) -> None:
     login(client, "admin", "secret")
     add_book(client)
-    assert "<details" in client.get("/?view=nonsense").text
+    assert '<details class="shelf"' in client.get("/?view=nonsense").text
 
 
 def test_books_view_only_lists_own_books(client: FlaskClient) -> None:
@@ -210,7 +210,7 @@ def test_search_keeps_view(client: FlaskClient) -> None:
 
 def test_gallery_without_books_has_no_shelf(client: FlaskClient) -> None:
     login(client, "admin", "secret")
-    assert "<details" not in client.get("/").text
+    assert '<details class="shelf"' not in client.get("/").text
 
 
 def test_comma_separates_new_categories(client: FlaskClient) -> None:
