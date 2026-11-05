@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: My Little Booklist 0.3.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-03 19:16+0100\n"
+"POT-Creation-Date: 2026-11-05 06:43+0100\n"
 "PO-Revision-Date: 2026-10-25 14:25+0100\n"
 "Last-Translator: Axel Müller\n"
 "Language: de\n"
@@ -57,6 +57,27 @@ msgstr "Kategorie in „%(name)s“ umbenannt."
 #, python-format
 msgid "Category “%(name)s” deleted. Its books stay in your collection."
 msgstr "Kategorie „%(name)s“ gelöscht. Ihre Bücher bleiben in deiner Sammlung."
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book moved to “%(name)s”."
+msgid_plural "%(num)d books moved to “%(name)s”."
+msgstr[0] "%(num)d Buch nach „%(name)s“ verschoben."
+msgstr[1] "%(num)d Bücher nach „%(name)s“ verschoben."
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book copied to “%(name)s”."
+msgid_plural "%(num)d books copied to “%(name)s”."
+msgstr[0] "%(num)d Buch nach „%(name)s“ kopiert."
+msgstr[1] "%(num)d Bücher nach „%(name)s“ kopiert."
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book removed from its category."
+msgid_plural "%(num)d books removed from their category."
+msgstr[0] "%(num)d Buch aus seiner Kategorie entfernt."
+msgstr[1] "%(num)d Bücher aus ihrer Kategorie entfernt."
 
 #: src/mylittlebooklist/routes/books.py
 msgid "Book added to your collection."
@@ -331,6 +352,11 @@ msgstr "Abbrechen"
 
 #: src/mylittlebooklist/templates/gallery.html
 #, python-format
+msgid "Select: %(title)s"
+msgstr "Auswählen: %(title)s"
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
 msgid "Search: “%(q)s”"
 msgstr "Suche: „%(q)s“"
 
@@ -384,6 +410,31 @@ msgstr "Nicht in Besitz"
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Reset filters"
 msgstr "Filter zurücksetzen"
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "%(num)s selected"
+msgstr "%(num)s ausgewählt"
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Category"
+msgstr "Kategorie"
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Move"
+msgstr "Verschieben"
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Copy"
+msgstr "Kopieren"
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Remove from category"
+msgstr "Aus Kategorie entfernen"
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Clear selection"
+msgstr "Auswahl aufheben"
 
 #: src/mylittlebooklist/templates/gallery.html
 msgid "New category name"

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: My Little Booklist VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-03 19:16+0100\n"
+"POT-Creation-Date: 2026-11-05 06:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -56,6 +56,27 @@ msgstr ""
 #, python-format
 msgid "Category “%(name)s” deleted. Its books stay in your collection."
 msgstr ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book moved to “%(name)s”."
+msgid_plural "%(num)d books moved to “%(name)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book copied to “%(name)s”."
+msgid_plural "%(num)d books copied to “%(name)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/mylittlebooklist/routes/books.py
+#, python-format
+msgid "%(num)d book removed from its category."
+msgid_plural "%(num)d books removed from their category."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/mylittlebooklist/routes/books.py
 msgid "Book added to your collection."
@@ -328,6 +349,11 @@ msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
 #, python-format
+msgid "Select: %(title)s"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
 msgid "Search: “%(q)s”"
 msgstr ""
 
@@ -380,6 +406,31 @@ msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html
 msgid "Reset filters"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+#, python-format
+msgid "%(num)s selected"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Move"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Copy"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Remove from category"
+msgstr ""
+
+#: src/mylittlebooklist/templates/gallery.html
+msgid "Clear selection"
 msgstr ""
 
 #: src/mylittlebooklist/templates/gallery.html

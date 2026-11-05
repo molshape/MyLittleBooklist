@@ -102,6 +102,27 @@ button.link {
 .shelf-rename { flex-wrap: wrap; margin-bottom: 1rem; }
 .shelf-rename input[name=new] { flex: 1 1 8rem; max-width: 24rem; }
 .shelf-rename button { width: auto; }
+.shelf.drop-target { outline: 2px dashed var(--pico-primary); outline-offset: .25rem; border-radius: var(--radius); }
+
+/* Selecting books */
+.tile-wrap { position: relative; }
+input.pick {
+  position: absolute; top: .4rem; inset-inline-start: .4rem; z-index: 1;
+  width: 1.4rem; height: 1.4rem; margin: 0; opacity: 0;
+}
+.tile-wrap:hover input.pick, input.pick:focus-visible, .picking input.pick { opacity: 1; }
+@media (hover: none) { input.pick { opacity: 1; } }
+input.pick:checked + .tile img, input.pick:checked + .tile .placeholder {
+  outline: 3px solid var(--pico-primary); outline-offset: 2px;
+}
+.assign-bar {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 20; margin: 0; padding: .75rem 1rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem;
+  background: var(--pico-card-background-color); box-shadow: 0 -4px 14px rgb(0 0 0 / .18);
+}
+.assign-bar input[name=target] { flex: 1 1 10rem; max-width: 20rem; margin: 0; }
+.assign-bar button { width: auto; margin: 0; }
+body.picking { padding-bottom: 6rem; }  /* the bar must not cover the last row */
 
 /* Filter bar */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1.5rem; }
@@ -177,4 +198,5 @@ button.link {
   .detail, .form-grid { grid-template-columns: 1fr; }
   .detail-cover, .form-cover { max-width: 220px; margin-inline: auto; }
   .gallery { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 1rem .75rem; }
+  body.picking { padding-bottom: 13rem; }
 }

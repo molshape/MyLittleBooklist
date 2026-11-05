@@ -8,9 +8,15 @@
   {%- if icon %}{{ icon() }} {% endif %}{{ label }}</a>
 {%- endmacro %}
 
-{% macro tiles(books) %}
+{% macro tiles(books, shelf=none) %}
 <div class="gallery">
   {% for b in books %}
+  <div class="tile-wrap">
+  {# Next to the link, not inside it: interactive elements must not be nested in a link #}
+  {% if shelf is not none %}
+  <input type="checkbox" class="pick" form="assign" name="item" value="{{ b.id }}:{{ shelf }}" autocomplete="off"
+         aria-label="{{ _('Select: %(title)s', title=b.title) }}">
+  {% endif %}
   <a class="tile" href="{{ url_for('book_detail', book_id=b.id) }}" title="{{ b.title }} – {{ b.author }}">
     {% if b.has_cover %}
     <img src="{{ url_for('cover', book_id=b.id) }}" alt="{{ _('Cover: %(title)s', title=b.title) }}" loading="lazy">
@@ -29,6 +35,7 @@
       {% endif %}
     </div>
   </a>
+  </div>
   {% endfor %}
 </div>
 {% endmacro %}
@@ -76,9 +83,24 @@
     <button type="submit" form="delete-shelf-{{ loop.index }}" class="link shelf-action" title="{{ _('Delete category') }}" aria-label="{{ _('Delete category') }}">{{ icons.trash() }}</button>
     {%- endif %}
   </summary>
-  {{ tiles(shelf) }}
+  {{ tiles(shelf, name) }}
 </details>
 {% endfor %}
+{# After the shelves, so keyboard users reach it by tabbing forward from the checkboxes #}
+<form action="{{ url_for('assign_category', **request.args) }}" method="post" id="assign" class="assign-bar" hidden
+      data-label="{{ _('%(num)s selected', num='#') }}">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <strong class="count" role="status"></strong>
+  <input type="text" name="target" list="assign-categories" required
+         placeholder="{{ _('Category') }}" aria-label="{{ _('Category') }}">
+  <datalist id="assign-categories">
+    {% for category in user_categories() %}<option value="{{ category }}"></option>{% endfor %}
+  </datalist>
+  <button type="submit" name="mode" value="move">{{ _("Move") }}</button>
+  <button type="submit" name="mode" value="copy" class="secondary">{{ _("Copy") }}</button>
+  <button type="submit" name="mode" value="remove" class="secondary outline" formnovalidate>{{ _("Remove from category") }}</button>
+  <button type="button" class="link clear">{{ _("Clear selection") }}</button>
+</form>
 <script>
   for (const form of document.querySelectorAll(".shelf-rename")) {
     const summary = form.parentElement.querySelector(`.shelf[data-name="${CSS.escape(form.elements.old.value)}"] > summary`);
@@ -109,6 +131,84 @@
   } catch (e) {}
 </script>
 {% endif %}
+<script>
+  {
+    const form = document.getElementById("assign");
+    const boxes = [...document.querySelectorAll(".pick")];
+    const picked = () => boxes.filter((box) => box.checked);
+    const sync = () => {
+      const count = picked().length;
+      form.hidden = !count;
+      document.body.classList.toggle("picking", count > 0);
+      form.querySelector(".count").textContent = form.dataset.label.replace("#", count);
+    };
+    let dragged = null;
+    // What dropping here does: "move", "copy" or null if the shelf doesn't accept it
+    const effect = (event, shelf) => {
+      if (!dragged || dragged.every((box) => box.closest(".shelf") === shelf)) return null;
+      if (!(event.shiftKey || event.ctrlKey || event.altKey)) return "move";
+      return shelf.dataset.name ? "copy" : null;
+    };
+    const unmark = () => {
+      for (const shelf of document.querySelectorAll(".drop-target")) shelf.classList.remove("drop-target");
+    };
+
+    for (const box of boxes) {
+      const link = box.nextElementSibling;
+      box.addEventListener("change", sync);
+      link.addEventListener("click", (event) => {
+        // A modified click keeps opening the book in a new tab or window
+        if (!picked().length || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        event.preventDefault();
+        box.checked = !box.checked;
+        sync();
+      });
+      link.addEventListener("dragstart", (event) => {
+        dragged = box.checked ? picked() : [box];
+        event.dataTransfer.effectAllowed = "copyMove";
+      });
+      link.addEventListener("dragend", () => { dragged = null; unmark(); });
+    }
+
+    for (const shelf of document.querySelectorAll(".shelf")) {
+      shelf.addEventListener("dragover", (event) => {
+        const kind = effect(event, shelf);
+        shelf.classList.toggle("drop-target", !!kind);
+        if (!kind) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = kind;
+      });
+      shelf.addEventListener("dragleave", (event) => {
+        if (!shelf.contains(event.relatedTarget)) shelf.classList.remove("drop-target");
+      });
+      shelf.addEventListener("drop", (event) => {
+        const kind = effect(event, shelf);
+        if (!kind) return;
+        event.preventDefault();
+        for (const box of boxes) box.checked = dragged.includes(box);
+        form.elements.target.value = shelf.dataset.name;
+        form.requestSubmit(form.querySelector(`button[value=${shelf.dataset.name ? kind : "remove"}]`));
+      });
+    }
+
+    form.querySelector(".clear").addEventListener("click", () => {
+      for (const box of boxes) box.checked = false;
+      sync();
+    });
+    // Also runs when the browser restores checked boxes after going back
+    addEventListener("pageshow", sync);
+
+    // Stay on the shelf after sorting, unless an error message at the top needs to be seen
+    form.addEventListener("submit", () => {
+      try { sessionStorage.setItem("assign-scroll", scrollY); } catch (e) {}
+    });
+    try {
+      const y = sessionStorage.getItem("assign-scroll");
+      sessionStorage.removeItem("assign-scroll");
+      if (y && !document.querySelector(".flash.error")) scrollTo(0, +y);
+    } catch (e) {}
+  }
+</script>
 {% elif books %}
 {{ tiles(books) }}
 {% elif q or filters %}
